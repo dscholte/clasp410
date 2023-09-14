@@ -20,9 +20,9 @@ forest_cmap = ListedColormap(['tan', 'darkgreen', 'crimson'])
 #2 is forest
 #3 is on fire
 
-nx, ny, numiters = 3, 3, 3 # Number of cells in X and Y direction.
+nx, ny, numiters = 3, 3, 4 # Number of cells in X and Y direction.
 prob_spread = 1.0 # Chance to spread to adjacent cells.
-prob_bare = 0.5 # Chance of cell to start as bare patch.
+prob_bare = 0.0 # Chance of cell to start as bare patch.
 prob_start = 0.0 # Chance of cell to start on fire.
 
 
@@ -37,43 +37,52 @@ for i in range(nx):
     for j in range(ny):
         ## Perform logic here:
         if np.random.rand() < prob_bare:
-            forest[i, j] = 1
+            forest[0,i, j] = 1
             
 # Set the center cell to "burning":
-forest [1,1] = 3
+forest [0,1,1] = 3
 
+fig, ax = plt.subplots(1,1)
+ax.pcolor(forest[0,:,:], cmap=forest_cmap, vmin=1, vmax=3)
 
 #fire spread loop
 for k in range(1, numiters):
     
-    forest[k,ny,nx] = forest[k-1,ny,nx]
+    forest[k,:,:] = forest[k-1,:,:]
     for i in range(nx):
+        
+        
         for j in range(ny):
-           
+            
+            
             if forest[k-1,j,i]==3:
+        
                 
-                if forest[j,i-1]==2:
+                #going left
+                if i!=0 and forest[k-1,j,i-1]==2:
                     
-                    forest[j, i-1] = 3
+                    forest[k,j, i-1] = 3
 
-                if forest[j-1,i]==2:
+                #going down
+                if j!=0 and forest[k-1,j-1,i]==2:
                     
-                    forest[j-1,i] = 3
+                    forest[k,j-1,i] = 3
                     
-                if forest[j,i+1]==2:
+                #going right 
+                if i!=nx-1 and forest[k-1,j,i+1]==2:
                     
-                    forest[j, i+1] = 3
+                    forest[k,j, i+1] = 3
                     
-                if forest[j+1,i]==2:
+                #going up
+                if j!=ny-1 and forest[k-1,j+1,i]==2:
                     
-                    forest[j+1, i] = 3
+                    forest[k,j+1, i] = 3
+
+                forest[k,j,i] = 1
+    fig, ax = plt.subplots(1,1)
+    ax.pcolor(forest[k,:,:], cmap=forest_cmap, vmin=1, vmax=3)
 
 
-
-'''
-fig, ax = plt.subplots(1,1)
-#ax.pcolor(forest, cmap=forest_cmap, vmin=1, vmax=3)
-'''
 
 
 
