@@ -20,10 +20,10 @@ forest_cmap = ListedColormap(['tan', 'darkgreen', 'crimson'])
 #2 is forest
 #3 is on fire
 
-nx, ny, numiters = 3, 3, 4 # Number of cells in X and Y direction.
-prob_spread = 1.0 # Chance to spread to adjacent cells.
-prob_bare = 0.0 # Chance of cell to start as bare patch.
-prob_start = 0.0 # Chance of cell to start on fire.
+nx, ny, numiters = 20, 20, 20 # Number of cells in X and Y direction.
+prob_spread = 0.7 # Chance to spread to adjacent cells.
+prob_bare = 0.01 # Chance of cell to start as bare patch.
+prob_start = 0.002 # Chance of cell to start on fire.
 
 
 # Create an initial grid, set all values to "2". dtype sets the value
@@ -40,7 +40,7 @@ for i in range(nx):
             forest[0,i, j] = 1
             
 # Set the center cell to "burning":
-forest [0,1,1] = 3
+forest [0,nx//2,ny//2] = 3
 
 fig, ax = plt.subplots(1,1)
 ax.pcolor(forest[0,:,:], cmap=forest_cmap, vmin=1, vmax=3)
@@ -49,39 +49,50 @@ ax.pcolor(forest[0,:,:], cmap=forest_cmap, vmin=1, vmax=3)
 for k in range(1, numiters):
     
     forest[k,:,:] = forest[k-1,:,:]
+    
     for i in range(nx):
-        
-        
+    
         for j in range(ny):
             
+            # random chance of a piece of forest starting on fire 
+            if forest[k-1,j,i]==2:
+                firestart = np.random.rand()
+                if firestart <= prob_start:
+                    forest[k,j,i] = 3
             
+            # if the forest was already on fire, move on to possibility of spread
             if forest[k-1,j,i]==3:
         
-                
-                #going left
+                #going left, if not an edge and cell is a forest, spread has a chance
                 if i!=0 and forest[k-1,j,i-1]==2:
-                    
-                    forest[k,j, i-1] = 3
+                    firespread =np.random.rand()
+                    if firespread <= prob_spread:
+                        forest[k,j, i-1] = 3
 
-                #going down
+                #going down, if not an edge and cell is a forest, spread has a chance
                 if j!=0 and forest[k-1,j-1,i]==2:
+                    firespread =np.random.rand()
+                    if firespread <= prob_spread:
+                        forest[k,j-1,i] = 3
                     
-                    forest[k,j-1,i] = 3
-                    
-                #going right 
+                #going right, if not an edge and cell is a forest, spread has a chance
                 if i!=nx-1 and forest[k-1,j,i+1]==2:
+                    firespread =np.random.rand()
+                    if firespread <= prob_spread:
+                        forest[k,j, i+1] = 3
                     
-                    forest[k,j, i+1] = 3
-                    
-                #going up
+                #going up, if not an edge and cell is a forest, spread has a chance
                 if j!=ny-1 and forest[k-1,j+1,i]==2:
-                    
-                    forest[k,j+1, i] = 3
-
+                    firespread =np.random.rand()
+                    if firespread <= prob_spread:
+                        forest[k,j+1, i] = 3
+                        
+                # current on fire cell becomes bare
                 forest[k,j,i] = 1
+                
+    #plot current conditions
     fig, ax = plt.subplots(1,1)
     ax.pcolor(forest[k,:,:], cmap=forest_cmap, vmin=1, vmax=3)
-
 
 
 
