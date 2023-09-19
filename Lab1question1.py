@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Sep  7 10:08:13 2023
+Created on Mon Sep 18 20:40:18 2023
 
 @author: dscho
+
+This code is the same as Lab1Fire.py
+It is exclusively used to illustrate question #1 on lab 1.
 """
 
-#!/usr/bin/env python3
-'''
-This file contains tools and scripts for completing Lab 1 for CLaSP 410.
-To reproduce the plots shown in the lab report, do this...
-'''
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
@@ -20,10 +18,9 @@ forest_cmap = ListedColormap(['tan', 'darkgreen', 'crimson'])
 #2 is forest
 #3 is on fire
 
-nx, ny, numiters = 30, 20, 300 # Number of cells in X and Y direction and # of interations
+nx, ny, numiters = 11, 5, 300 # Number of cells in X and Y direction and # of interations
 
 prob_start = 0.005 # Chance of cell being on fire at the beginning.
-
 
 def fire(prob_spread,prob_bare):
 
@@ -116,46 +113,4 @@ def fire(prob_spread,prob_bare):
 
     return time+1, numberbare, percentbare
 
-#initialize a range of probspread and probbare values
-spreadrange = np.arange(0,1.1,0.05)
-barerange = np.arange(0,1.1,0.05)
-
-#initialize array of outputs from change in probspread values
-timearray = []
-numberbarearray = []
-spreadarray = []
-
-    #loop range of probspread values through fire spread function
-for i in spreadrange:
-    timeend, numberofbare, percentagebare = fire(i,0.01)
-    timearray.append(timeend)
-    numberbarearray.append(numberofbare)
-    spreadarray.append(percentagebare)
-    
-    
-plt.figure(figsize=(10,5))
-plt.plot(spreadrange,spreadarray)
-plt.title('Percentage of cells that are bare with 1% of starting cells bare')
-plt.xlabel('Probability of Spread')
-plt.ylabel('Percentage of cells that are bare after fire')
-
-#initialize array of outputs from change in probbare values
-timearray2 = []
-numberbarearray2 = []
-spreadarray2 = []
-
-for i in barerange:
-    timeend2, numberofbare2, percentagebare2 = fire(0.5,i)
-    timearray2.append(timeend2)
-    numberbarearray2.append(numberofbare2)
-    spreadarray2.append(percentagebare2)
-
-plt.figure(figsize=(10,5))
-plt.plot(barerange,spreadarray2)
-plt.title('Percentage of cells that are bare with 50% chance of fire spread')
-plt.xlabel('Percentage of starting cells that are bare')
-plt.ylabel('Percentage of cells that are bare after fire')
-
-    
-    
-    
+fire(1,0.01)
