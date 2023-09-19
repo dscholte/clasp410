@@ -144,6 +144,7 @@ timearray2 = []
 numberbarearray2 = []
 spreadarray2 = []
 
+#loop range of probbare values through fire spread function
 for i in barerange:
     timeend2, numberofbare2, percentagebare2 = fire(0.5,i)
     timearray2.append(timeend2)
