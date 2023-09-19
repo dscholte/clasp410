@@ -16,14 +16,12 @@ area_cmap = ListedColormap(['blue', 'green', 'red', 'black'])
 #2 is healthy
 #3 is sick
 
-nx, ny, numiters = 30, 20, 30 # Number of cells in X and Y direction and # of interations
-prob_spread = 0.6 # Chance to spread to adjacent people.
-prob_immune = 0.01 # Chance of starting with immunity with vaccine
-prob_start = 0.001 # Chance of cell randomly becoming infected.
-#prob_fatality = 0.1 # Chance that an infected person dies (3 becomes 4)
+nx, ny, numiters = 30, 20, 300 # Number of cells in X and Y direction and # of interations
+prob_spread = 0.65 # OVERALL CHANCE OF SPREAD FROM ONE SICK PERSON TO A HEALTHY PERSON
 
 
-def diseasespr(prob_fatality):
+
+def disease(prob_fatality,prob_immune):
     # Create an initial grid, set all values to "2"(healthy). dtype sets the value
     # type in our array to integers only.
     area  =  np.zeros([numiters,ny,nx], dtype=int) + 2
@@ -54,11 +52,6 @@ def diseasespr(prob_fatality):
         
             for j in range(ny):
                 
-                # random chance of a person getting sick 
-                if area[k-1,j,i]==2:
-                    firestart = np.random.rand()
-                    if firestart <= prob_start:
-                        area[k,j,i] = 3
                 
                 # if person was already sick, move on to possibility of spread
                 if area[k-1,j,i]==3:
@@ -100,8 +93,8 @@ def diseasespr(prob_fatality):
         fig, ax = plt.subplots(1,1)
         ax.pcolor(area[k,:,:], cmap=area_cmap, vmin=1, vmax=4)
         
-        # end loop if there are no more cells on fire and output # of iterations
-        # it took to get there and number/percentage of cells that are bare
+        # end loop if there are no more cells are sick and output # of iterations
+        # it took to get there and number/percentage of cells that are dead
         if 3 not in area[k,:,:]:
             time = k
             percentdead = numberdead/(nx*ny)
@@ -110,4 +103,47 @@ def diseasespr(prob_fatality):
 
     return time+1, numberdead, percentdead
         
-        
+#initialize a range of probimmune and probfatality values
+immunerange = np.arange(0,1.1,0.05)
+fatalityrange = np.arange(0,1.1,0.05)
+
+#initialize array of outputs from change in probfatality values
+timearray = []
+numberdeadarray = []
+fatalityarray = []
+
+    #loop range of probfatality values through disease spread function
+for i in fatalityrange:
+    timeend, numberofdead, percentagedead = disease(i,0.01)
+    timearray.append(timeend)
+    numberdeadarray.append(numberofdead)
+    fatalityarray.append(percentagedead)
+    
+    
+plt.figure(figsize=(10,5))
+plt.plot(fatalityrange,fatalityarray)
+plt.title('Percentage of cells that are dead with 1% of starting cells immune')
+plt.xlabel('Probability of Fatality')
+plt.ylabel('Percentage of cells that are dead after spread')
+
+
+#initialize array of outputs from change in probimmune values
+timearray2 = []
+numberimmunearray = []
+immunearray = []
+
+    #loop range of probimmune values through disease spread function
+for i in immunerange:
+    timeend2, numberofdead, percentagedead = disease(0.1,i)
+    timearray2.append(timeend2)
+    numberimmunearray.append(numberofdead)
+    immunearray.append(percentagedead)
+    
+    
+plt.figure(figsize=(10,5))
+plt.plot(immunerange,immunearray)
+plt.title('Percentage of cells that are dead with a 10% chance of death from the disease')
+plt.xlabel('Percentage of cells that begin with immunity from death (Vaccine)')
+plt.ylabel('Percentage of cells that are dead after spread')
+
+

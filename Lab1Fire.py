@@ -22,7 +22,7 @@ forest_cmap = ListedColormap(['tan', 'darkgreen', 'crimson'])
 
 nx, ny, numiters = 30, 20, 300 # Number of cells in X and Y direction and # of interations
 
-prob_start = 0.005 # Chance of cell to start on fire randomly.
+prob_start = 0.005 # Chance of cell being on fire at the beginning.
 
 
 def fire(prob_spread,prob_bare):
@@ -42,7 +42,7 @@ def fire(prob_spread,prob_bare):
                 forest[0,j, i] = 1
                 numberbare = numberbare+1
                 
-    # chance of a cell starting on fire
+    # chance of a cell beginning on fire
     # Loop in the "x" direction:
     for i in range(nx):
         # Loop in the "y" direction:
