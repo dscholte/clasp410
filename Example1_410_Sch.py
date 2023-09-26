@@ -23,14 +23,6 @@ def tempsolve(time, k=1./300, T_env=25, T_init=90):
     time = numpy array of times
         Array of time inputs for which you want corresponding temps
     
-    
-    Other Parameters
-    ================
-    
-    
-    Returns
-    =========
-    
 
     '''
     

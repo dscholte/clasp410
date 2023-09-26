@@ -18,12 +18,12 @@ def hot(T, k, Tenv):
     Given current temp (T), cooling rate (k) and environmental temp (Tenv), 
     return the derivative of the temperature of the cooling body
     '''
-    
-    return 
+    dt = -k*(T-Tenv)
+    return dt
 
 
 
-def euler(time, T_init, deltat=60, tstart = 0, tstop = 600, k = 1/300, 
+def euler(T_init, deltat=60, tstart = 0, tstop = 600, k = 1/300, 
           Tenv = 21, Tstop = 60):
     '''
     solve the cooling equaiton given the time array, 'time', with times 
@@ -45,6 +45,7 @@ def euler(time, T_init, deltat=60, tstart = 0, tstop = 600, k = 1/300,
         
         if T_sol[i+1] <= Tstop:
             T_sol = T_sol[:i+2]
+            time = time[:i+2]
             break
         
     return time, T_sol

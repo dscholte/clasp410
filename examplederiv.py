@@ -10,7 +10,7 @@ This file explores different numerical approximations for first derivatives.
 import numpy as np
 import matplotlib.pyplot as plt
 
-
+plt.style.use('fivethirtyeight')
 
 def derivative(fx, dx=1):
     '''
@@ -22,9 +22,10 @@ def derivative(fx, dx=1):
     
     #create result array of zeros
     dfdx = np.zeros(fx.size)
+    
     dfdx[:-1] = (fx[1:] - fx[:-1]) / dx
     
-    dfdx[-1] = dfdx[-2]
+    dfdx[-1] = (fx[-1] - fx[-2]) / dx
     
     return dfdx
 
