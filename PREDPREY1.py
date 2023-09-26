@@ -62,7 +62,11 @@ def taylor_step(prey, pred, dt, a, b, c, d) -> float:
 
     """
 
-    prey_deriv, pred_deriv = dt * (simulation(dt, [prey, pred], a, b, c, d))
+    
+    results = (simulation(dt, [prey, pred], a, b, c, d))
+    prey_deriv = dt * results[0]
+    pred_deriv = dt *  results[1]
+
     return prey + prey_deriv, pred + pred_deriv
 
 
@@ -99,8 +103,9 @@ def euler_method(
     return times,solution_prey,solution_pred
 
 
-dT = 0.1
-time, N1, N2 = euler_method(100,5,1.1,0.4,0.1,0.4)
+dT = 0.001
+t_stop = 60
+time, N1, N2 = euler_method(100,5,1.1,0.4,0.1,0.4,dT,t_stop)
 f, (ax1, ax2) = plt.subplots(2)
 
 ax1.plot(time, N1, color="b")
