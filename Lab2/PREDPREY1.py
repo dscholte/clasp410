@@ -131,16 +131,16 @@ def main():
     beta = 2
     delta = 1
     gamma = 3
-    N1initial = 0.3
-    N2initial = 0.6
-    dT = 0.05
-    t_stop = 100
+    N1initial = 2
+    N2initial = 6
+    dT = 0.005
+    t_stop = 1000
 
     ##################### Running Predator - Prey with two methods ############################################
 
     # Run Euler Method
     times, prey, pred = euler_method(
-        simulation, N2initial, N1initial, alpha, beta, gamma, delta, dT, t_stop
+        simulation, N1initial, N2initial, alpha, beta, gamma, delta, dT, t_stop
     )
     predpreyeulerdata = modelrundata(times, prey, pred, "Predator_Prey_Euler")
 
@@ -160,7 +160,7 @@ def main():
 
     # Run Euler Method
     times, prey, pred = euler_method(
-        dNdt_comp, N2initial, N1initial, alpha, beta, gamma, delta, dT, t_stop
+        dNdt_comp, N1initial, N2initial, alpha, beta, gamma, delta, dT, t_stop
     )
     compeulerdata = modelrundata(times, prey, pred, "Competition_Euler")
 
