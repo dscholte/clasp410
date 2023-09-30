@@ -2,7 +2,8 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+# Our Stuff
+Lab2/Plots/
 # C extensions
 *.so
 
