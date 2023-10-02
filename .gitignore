@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 # Our Stuff
 Lab2/Plots/
+Lab2/Lab2/Plots/
 # C extensions
 *.so
 
