@@ -19,7 +19,7 @@ import json
 
 plt.style.use("fivethirtyeight")
 
-
+# Object that holds model results
 @dataclass
 class modelrundata:
     times: list[float]
@@ -87,7 +87,8 @@ def euler_method(
 ) -> modelrundata:
     """
     Run Euler Method
-
+    Calls taylor step function
+    Taylor function calls derivative of either equation
     """
 
     ## Create Initial Arrays ##
@@ -105,10 +106,10 @@ def euler_method(
             deriv_func, solution_N1[index], solution_N2[index], dt, a, b, c, d
         )
 
-    ## Return Results ##
+    ## Return Results , times and populations ##
     return times, solution_N1, solution_N2
 
-
+# Creates folders for plots
 def make_plotting_folder(save_id: str, iter_label: str):
     if not os.path.exists("Lab2"):
         os.mkdir("Lab2")
@@ -119,8 +120,10 @@ def make_plotting_folder(save_id: str, iter_label: str):
     if not os.path.exists("Lab2/Plots/" + save_id + "/" + iter_label):
         os.mkdir("Lab2/Plots/" + save_id + "/" + iter_label)
     return "Lab2/Plots/" + save_id + "/" + iter_label
-
-
+    # returns plotting directory where plots end up
+    
+    
+#Plots model data and save it to directory
 def single_plot(model_data: modelrundata, save_id: str, iter_label: str) -> None:
     fig, axes = plt.subplots(1)
     axes.plot(model_data.times, model_data.N1, color="b", label="N1 Population")
@@ -133,7 +136,7 @@ def single_plot(model_data: modelrundata, save_id: str, iter_label: str) -> None
     plt.savefig(os.path.join(plot_dir, plot_name), format="pdf", bbox_inches="tight")
     plt.close()
 
-
+# compares runga-kutta vs euler
 def comparison_plots(
     euler_model_data: modelrundata,
     RK8_model_data: modelrundata,
@@ -174,8 +177,7 @@ def comparison_plots(
     axes.legend(loc="upper left")
     axes.set_ylabel("Population")
     axes.set_xlabel("Time (Years)")
-    axes.set_title(title)
-    plot_dir = make_plotting_folder(save_id, iter_label)
+    plot_dir = make_plotting_folder(save_id, iter_label) #make sure you have plotting folder
     plot_name = "Comparison_RK8_Euler" + label + "_Plot.pdf"
     plt.savefig(os.path.join(plot_dir, plot_name), format="pdf", bbox_inches="tight")
     plt.close()
@@ -191,7 +193,7 @@ def phase_plot(model_data: modelrundata, save_id: str, iter_label: str) -> None:
     plt.savefig(os.path.join(plot_dir, plot_name), format="pdf", bbox_inches="tight")
     plt.close()
 
-
+#Takes in parameters a,b,c,d and others and runs euler and RK8
 def run_models(model_params):
     save_id = model_params["save_id"]
     iter_label = model_params["iter_label"]
@@ -296,7 +298,7 @@ def run_models(model_params):
     ## Plot Phase Diagrams ##
     phase_plot(ppeulerdata, save_id, iter_label)
     phase_plot(ppRK8data, save_id, iter_label)
-    return None
+    return ppeulerdata, ppRK8data, compeulerdata, compRK8data
 
 
 def main():
@@ -332,24 +334,56 @@ def main():
     ## Question 1 Part 2: We need to vary the timestep and see what happens! ##
     model_params = default_model_params.copy()
     model_params["save_id"] = "varytimestep"
-    for time_step in np.arange(1, 4, 0.5):
-        model_params["iter_label"] = "ts_" + str(time_step)
-        model_params["t_step_comp"] = time_step
-        model_params["t_step_preypred"] = time_step
-        run_models(model_params)
+    # for time_step in np.arange(1, 4, 0.5):
+    #     model_params["iter_label"] = "ts_" + str(time_step)
+    #     model_params["t_step_comp"] = time_step
+    #     model_params["t_step_preypred"] = time_step
+    #     run_models(model_params)
 
     ## Question 2 & 3: Vary Initial Conditions!! ##
     model_params = default_model_params.copy()
     model_params["save_id"] = "VaryInitConds!"
+    modelsruns = []
     for N1_step in np.arange(0.1, 1, 0.1):
         model_params["iter_label"] = "N1_" + str(round(N1_step, 2))
         model_params["N1initial"] = N1_step
-        run_models(model_params)
+        results1 = run_models(model_params)
+        modelsruns.append(results1)
     for N2_step in np.arange(0.1, 1, 0.1):
         model_params["iter_label"] = "N2_" + str(round(N2_step, 2))
         model_params["N2initial"] = N2_step
         run_models(model_params)
+    population_prey_max=[]
+    population_pred_max = []
+    for i in modelsruns:
+        population_prey_max.append(max(i[1].N1))
+        population_pred_max.append(max(i[1].N2))
+    N1_Values =np.arange(0.1, 1, 0.1)
+    fig, axes = plt.subplots(1)
+    axes.plot(N1_Values, population_prey_max, color="b", label="N1 Max Population")
+    axes.plot(N1_Values,population_pred_max, color="r", label="N2 Max Population")
+    axes.legend(loc="upper left")
+    axes.set_ylabel("Population")
+    axes.set_xlabel("N1")
+    plt.show()
+    #plot_dir = make_plotting_folder(save_id, iter_label)
 
 
+    #Pedator Prey ModelComparoisons
+    colors = ['b','g','r','c','m','y','k','#A52A2A','#FF7F00']
+    fig, axes = plt.subplots(1)
+    for counter, i in enumerate(modelsruns): 
+        
+        axes.plot(i[1].N1, i[1].N2, color=colors[counter], label=round(N1_Values[counter],2))
+    axes.set_ylabel("Predator Species")
+    axes.set_xlabel("Prey Species")
+    #plot_dir = make_plotting_folder(save_id, iter_label)
+    #plot_name = "Phase_" + model_data.label + "_Plot.pdf"
+    #plt.savefig(os.path.join(plot_dir, plot_name), format="pdf", bbox_inches="tight")
+    #plt.close()
+    axes.legend()
+    plt.show()
+    
+    
 if __name__ == "__main__":
     main()
