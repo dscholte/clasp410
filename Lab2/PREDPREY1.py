@@ -140,6 +140,7 @@ def comparison_plots(
     save_id: str,
     iter_label: str,
     label: str,
+    title: str,
 ) -> None:
     fig, axes = plt.subplots(1)
     axes.plot(
@@ -173,6 +174,7 @@ def comparison_plots(
     axes.legend(loc="upper left")
     axes.set_ylabel("Population")
     axes.set_xlabel("Time (Years)")
+    axes.set_title(title)
     plot_dir = make_plotting_folder(save_id, iter_label)
     plot_name = "Comparison_RK8_Euler" + label + "_Plot.pdf"
     plt.savefig(os.path.join(plot_dir, plot_name), format="pdf", bbox_inches="tight")
@@ -274,8 +276,22 @@ def run_models(model_params):
     single_plot(compRK8data, save_id, iter_label)
 
     ## Plot Comparison Plots ##
-    comparison_plots(ppeulerdata, ppRK8data, save_id, iter_label, "PredPrey")
-    comparison_plots(compeulerdata, compRK8data, save_id, iter_label, "Comparison")
+    comparison_plots(
+        ppeulerdata,
+        ppRK8data,
+        save_id,
+        iter_label,
+        "PredPrey",
+        "Lotka-Volterra Predator-Prey Model",
+    )
+    comparison_plots(
+        compeulerdata,
+        compRK8data,
+        save_id,
+        iter_label,
+        "Comparison",
+        "Lotka-Volterra Competition Model",
+    )
 
     ## Plot Phase Diagrams ##
     phase_plot(ppeulerdata, save_id, iter_label)
