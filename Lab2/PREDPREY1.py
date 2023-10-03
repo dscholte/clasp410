@@ -247,6 +247,7 @@ def single_plot(model_data: modelrundata, save_id: str, iter_label: str) -> None
     axes.legend(loc="upper left")
     axes.set_ylabel("Population")
     axes.set_xlabel("Time (Years)")
+    axes.set_title(model_data.label.replace("_", " "))
     plot_dir = make_plotting_folder(save_id, iter_label)
     plot_name = "Single_" + model_data.label + "_Plot.pdf"
     plt.savefig(os.path.join(plot_dir, plot_name), format="pdf", bbox_inches="tight")
@@ -310,6 +311,7 @@ def comparison_plots(
     axes.legend(loc="upper left")
     axes.set_ylabel("Population")
     axes.set_xlabel("Time (Years)")
+    axes.set_title(title)
     plot_dir = make_plotting_folder(
         save_id, iter_label
     )  # make sure you have plotting folder
@@ -335,6 +337,7 @@ def phase_plot(model_data: modelrundata, save_id: str, iter_label: str) -> None:
     axes.plot(model_data.N1, model_data.N2, color="b", label="Phase - Prey & Pred")
     axes.set_ylabel("Predator Species")
     axes.set_xlabel("Prey Species")
+    axes.set_title("Phase Diagram for Predator-Prey")
     plot_dir = make_plotting_folder(save_id, iter_label)
     plot_name = "Phase_" + model_data.label + "_Plot.pdf"
     plt.savefig(os.path.join(plot_dir, plot_name), format="pdf", bbox_inches="tight")
@@ -447,32 +450,32 @@ def run_models(
         json.dump(model_params, f, indent=4)
 
     ## Plot Single Line Preliminary Analysis Model Data ##
-    single_plot(ppeulerdata, save_id, iter_label)
-    single_plot(ppRK8data, save_id, iter_label)
-    single_plot(compeulerdata, save_id, iter_label)
-    single_plot(compRK8data, save_id, iter_label)
+    # single_plot(ppeulerdata, save_id, iter_label)
+    # single_plot(ppRK8data, save_id, iter_label)
+    # single_plot(compeulerdata, save_id, iter_label)
+    # single_plot(compRK8data, save_id, iter_label)
 
-    ## Plot Comparison Plots ##
-    comparison_plots(
-        ppeulerdata,
-        ppRK8data,
-        save_id,
-        iter_label,
-        "PredPrey",
-        "Lotka-Volterra Predator-Prey Model",
-    )
-    comparison_plots(
-        compeulerdata,
-        compRK8data,
-        save_id,
-        iter_label,
-        "Comparison",
-        "Lotka-Volterra Competition Model",
-    )
+    # ## Plot Comparison Plots ##
+    # comparison_plots(
+    #     ppeulerdata,
+    #     ppRK8data,
+    #     save_id,
+    #     iter_label,
+    #     "PredPrey",
+    #     "Lotka-Volterra Predator-Prey Model",
+    # )
+    # comparison_plots(
+    #     compeulerdata,
+    #     compRK8data,
+    #     save_id,
+    #     iter_label,
+    #     "Comparison",
+    #     "Lotka-Volterra Competition Model",
+    # )
 
-    ## Plot Phase Diagrams ##
-    phase_plot(ppeulerdata, save_id, iter_label)
-    phase_plot(ppRK8data, save_id, iter_label)
+    # ## Plot Phase Diagrams ##
+    # phase_plot(ppeulerdata, save_id, iter_label)
+    # phase_plot(ppRK8data, save_id, iter_label)
     return ppeulerdata, ppRK8data, compeulerdata, compRK8data
 
 
@@ -495,6 +498,14 @@ def main():
         "t_step_preypred": 0.05,
         "t_stop": 100,
     }
+    model_params = default_model_params.copy()
+    model_params["save_id"] = "VaryInitConds!"
+    model_params["iter_label"] = "ExistanceComp"
+    model_params["N1initial"] = 0.2
+    model_params["N2initial"] = 0.4
+
+    results = run_models(model_params)
+
     ## Question 1: The first thing was to show we could reproduce the figures given! ##
     model_params = default_model_params.copy()
     run_models(model_params)
@@ -510,30 +521,63 @@ def main():
     ## Question 1 Part 2: We need to vary the timestep and see what happens! ##
     model_params = default_model_params.copy()
     model_params["save_id"] = "varytimestep"
-    # for time_step in np.arange(1, 4, 0.5):
-    #     model_params["iter_label"] = "ts_" + str(time_step)
-    #     model_params["t_step_comp"] = time_step
-    #     model_params["t_step_preypred"] = time_step
-    #     run_models(model_params)
+    modelsruns = []
+    for time_step in np.arange(1, 4, 0.5):
+        model_params["iter_label"] = "ts_" + str(time_step)
+        model_params["t_step_comp"] = time_step
+        model_params["t_step_preypred"] = time_step
+        results = run_models(model_params)
+        modelsruns.append(results)
+
+    ## An Overall Analysis Plot ##
+    population_prey_max = []
+    population_pred_max = []
+    for i in modelsruns:
+        population_prey_max.append(max(i[0].N1))
+        population_pred_max.append(max(i[0].N2))
+    fig, axes = plt.subplots(1)
+    axes.plot(
+        np.arange(1, 4, 0.5), population_prey_max, color="b", label="N1 Max Population"
+    )
+    axes.plot(
+        np.arange(1, 4, 0.5), population_pred_max, color="r", label="N2 Max Population"
+    )
+    axes.legend(loc="upper left")
+    axes.set_ylabel("Population")
+    axes.set_xlabel("Timestep")
+    axes.set_title("Varying TimeStep")
+    plot_dir = make_plotting_folder(
+        model_params["save_id"], "Overall"
+    )  # make sure you have plotting folder
+    plot_name = "Max_Population_Plot.pdf"
+    plt.savefig(os.path.join(plot_dir, plot_name), format="pdf", bbox_inches="tight")
+    plt.close()
 
     ## Question 2 & 3: Vary Initial Conditions!! ##
     model_params = default_model_params.copy()
     model_params["save_id"] = "VaryInitConds!"
     modelsruns = []
+    modelsrunsN2 = []
     for N1_step in np.arange(0.1, 1, 0.1):
         model_params["iter_label"] = "N1_" + str(round(N1_step, 2))
         model_params["N1initial"] = N1_step
         results1 = run_models(model_params)
         modelsruns.append(results1)
+    model_params = default_model_params.copy()
+    model_params["save_id"] = "VaryInitConds!"
     for N2_step in np.arange(0.1, 1, 0.1):
         model_params["iter_label"] = "N2_" + str(round(N2_step, 2))
         model_params["N2initial"] = N2_step
-        run_models(model_params)
+        results2 = run_models(model_params)
+        modelsrunsN2.append(results2)
+
+    ## Plotting overall analysis plots ##
+
     population_prey_max = []
     population_pred_max = []
     for i in modelsruns:
-        population_prey_max.append(max(i[1].N1))
-        population_pred_max.append(max(i[1].N2))
+        population_prey_max.append(max(i[3].N1))
+        population_pred_max.append(max(i[3].N2))
     N1_Values = np.arange(0.1, 1, 0.1)
     fig, axes = plt.subplots(1)
     axes.plot(N1_Values, population_prey_max, color="b", label="N1 Max Population")
@@ -541,10 +585,32 @@ def main():
     axes.legend(loc="upper left")
     axes.set_ylabel("Population")
     axes.set_xlabel("N1")
+    axes.set_title("Varying N1 Against Population")
+
     plot_dir = make_plotting_folder(
         model_params["save_id"], "Overall"
     )  # make sure you have plotting folder
-    plot_name = "Max_Population_Plot.pdf"
+    plot_name = "Max_Population_Plot_N1.pdf"
+    plt.savefig(os.path.join(plot_dir, plot_name), format="pdf", bbox_inches="tight")
+    plt.close()
+
+    population_prey_max = []
+    population_pred_max = []
+    for i in modelsrunsN2:
+        population_prey_max.append(max(i[3].N1))
+        population_pred_max.append(max(i[3].N2))
+    N1_Values = np.arange(0.1, 1, 0.1)
+    fig, axes = plt.subplots(1)
+    axes.plot(N1_Values, population_prey_max, color="b", label="N1 Max Population")
+    axes.plot(N1_Values, population_pred_max, color="r", label="N2 Max Population")
+    axes.legend(loc="upper left")
+    axes.set_ylabel("Population")
+    axes.set_xlabel("N2")
+    axes.set_title("Varying N2 Against Population")
+    plot_dir = make_plotting_folder(
+        model_params["save_id"], "Overall"
+    )  # make sure you have plotting folder
+    plot_name = "Max_Population_Plot_N2.pdf"
     plt.savefig(os.path.join(plot_dir, plot_name), format="pdf", bbox_inches="tight")
     plt.close()
     # plot_dir = make_plotting_folder(save_id, iter_label)
@@ -558,15 +624,31 @@ def main():
         )
     axes.set_ylabel("Predator Species")
     axes.set_xlabel("Prey Species")
+    axes.set_title("Varying N1 and Predator Prey")
     axes.legend()
     plot_dir = make_plotting_folder(
         model_params["save_id"], "Overall"
     )  # make sure you have plotting folder
-    plot_name = "AllPreyPredPhaseDiagrams.pdf"
+    plot_name = "AllPreyPredPhaseDiagramsN1Vary.pdf"
     plt.savefig(os.path.join(plot_dir, plot_name), format="pdf", bbox_inches="tight")
     plt.close()
 
-    plt.show()
+    # Pedator Prey ModelComparoisons N2
+    fig, axes = plt.subplots(1)
+    for counter, i in enumerate(modelsrunsN2):
+        axes.plot(
+            i[1].N1, i[1].N2, color=colors[counter], label=round(N1_Values[counter], 2)
+        )
+    axes.set_ylabel("Predator Species")
+    axes.set_xlabel("Prey Species")
+    axes.set_title("Varying N2 and Predator Prey")
+    axes.legend()
+    plot_dir = make_plotting_folder(
+        model_params["save_id"], "Overall"
+    )  # make sure you have plotting folder
+    plot_name = "AllPreyPredPhaseDiagramsN2Vary.pdf"
+    plt.savefig(os.path.join(plot_dir, plot_name), format="pdf", bbox_inches="tight")
+    plt.close()
 
 
 if __name__ == "__main__":
