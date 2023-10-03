@@ -4,10 +4,6 @@ Created on Tue Sep 26 10:12:48 2023
 
 @author: dscho, manishrv
 
-
-
-
-
 """
 
 import numpy as np
@@ -19,21 +15,59 @@ import json
 
 plt.style.use("fivethirtyeight")
 
+
 # Object that holds model results
 @dataclass
 class modelrundata:
+    """
+    Class to hold all the information required from the ODE Solver.
+    Variables
+    ---------
+    times
+        It's a list of the times at each point
+    N1
+        The population of the N1 Species (Prey for the PreyPred Sim) at each time (t) in the times list
+    N2
+        The population of the N2 Species (Pred for the PreyPred Sim) at each time (t) in the times list
+    label
+        Informative label for the plots
+
+    """
+
     times: list[float]
     N1: list[float]
     N2: list[float]
     label: str
 
     def __post_init__(self):
+        """
+        Sanity Check when putting data in this class"""
         if len(self.N1) != len(self.times) or len(self.N2) != len(self.times):
             raise ValueError("Lists are not the same length! Doesn't make sense!")
 
 
-# Competition equations
-def dNdt_comp(t, variables, alpha, beta, delta, gamma):
+# Competition ODEs
+def dNdt_comp(
+    t: float,
+    variables: list[float],
+    alpha: float,
+    beta: float,
+    delta: float,
+    gamma: float,
+) -> tuple[float, float]:
+    """ "
+    The Competition ODEs
+    Parameters
+    ----------
+    variables
+        List of the N1 and N2 Populations
+    alpha, beta, delta, gamma
+        Input variables to the Competition ODEs
+    Returns
+    -------
+    dn1dt, dn2dt
+        Derivative at the next time step for N1, N2
+    """
     # N1 population
     N1 = variables[0]
 
@@ -47,7 +81,29 @@ def dNdt_comp(t, variables, alpha, beta, delta, gamma):
 
 
 # Predator - Prey equations
-def simulation(t, variables, alpha, beta, delta, gamma):
+def simulation(
+    t: float,
+    variables: list[float],
+    alpha: float,
+    beta: float,
+    delta: float,
+    gamma: float,
+) -> tuple[float, float]:
+    """ "
+    The Predator Prey ODEs
+    Parameters
+    ----------
+    t
+        time (Unused)
+    variables
+        List of the N1 (Prey) and N2 (Pred) Populations
+    alpha, beta, delta, gamma
+        Input variables to the Competition ODEs
+    Returns
+    -------
+    dn1dt, dn2dt
+        Derivative at the next time step for N1, N2
+    """
     # Prey population
     N1 = variables[0]
 
@@ -61,10 +117,27 @@ def simulation(t, variables, alpha, beta, delta, gamma):
     return (dn1dt, dn2dt)
 
 
-def taylor_step(deriv_func, N1, N2, dt, a, b, c, d) -> float:
+def taylor_step(
+    deriv_func, N1: float, N2: float, dt: float, a: float, b: float, c: float, d: float
+) -> float:
     """
-    Take First Order Taylor Step  Forward given a dt and initial vals
-
+    Take First Order Taylor Step Forward given a dt and initial vals
+    Parameters
+    ----------
+    deriv_func
+        The Derivative Function to use (Either Compeition ODE or Predator-Prey ODE)
+    N1
+        Initial N1 Population
+    N2
+        Initial N2 Population
+    dt
+        Timestep (Max time step for RK8)
+    a,b,c,d
+        Known Parameters for ODEs
+    Returns
+    -------
+    float
+        The taylor step forward in time
     """
 
     results = deriv_func(dt, [N1, N2], a, b, c, d)
@@ -89,6 +162,25 @@ def euler_method(
     Run Euler Method
     Calls taylor step function
     Taylor function calls derivative of either equation
+
+    Parameters
+    ----------
+    deriv_func
+        The Derivative Function to use (Either Compeition ODE or Predator-Prey ODE)
+    N_N1_init
+        Initial N1 Population
+    N_N2_init
+        Initial N2 Population
+    dt
+        Timestep (Max time step for RK8)
+    t_stop
+        End of time (Default is a 100 years)
+    a,b,c,d
+        Known Parameters for ODEs
+    Returns
+    -------
+    times, N1, N2
+        The output from the euler method, time, populations for both species
     """
 
     ## Create Initial Arrays ##
@@ -109,8 +201,21 @@ def euler_method(
     ## Return Results , times and populations ##
     return times, solution_N1, solution_N2
 
+
 # Creates folders for plots
-def make_plotting_folder(save_id: str, iter_label: str):
+def make_plotting_folder(save_id: str, iter_label: str) -> str:
+    """
+    Creates/Checks the required plotting folders
+    Parameters
+    ----------
+    save_id
+        First level Folder for what you are varying
+    iter_label
+        Second Level Folder for iterating through initial conditions
+    Returns
+    -------
+    The plotting directory you are dumping into.
+    """
     if not os.path.exists("Lab2"):
         os.mkdir("Lab2")
     if not os.path.exists("Lab2/Plots"):
@@ -120,11 +225,22 @@ def make_plotting_folder(save_id: str, iter_label: str):
     if not os.path.exists("Lab2/Plots/" + save_id + "/" + iter_label):
         os.mkdir("Lab2/Plots/" + save_id + "/" + iter_label)
     return "Lab2/Plots/" + save_id + "/" + iter_label
-    # returns plotting directory where plots end up
-    
-    
-#Plots model data and save it to directory
+
+
+# Plots model data and save it to directory
 def single_plot(model_data: modelrundata, save_id: str, iter_label: str) -> None:
+    """
+    Plots one model data in a specific folder
+    Parameters
+    ----------
+    model_data
+        The model data
+    save_id, iter_label
+        Where to save plot
+    Returns
+    -------
+    None
+    """
     fig, axes = plt.subplots(1)
     axes.plot(model_data.times, model_data.N1, color="b", label="N1 Population")
     axes.plot(model_data.times, model_data.N2, color="r", label="N2 Population")
@@ -136,6 +252,7 @@ def single_plot(model_data: modelrundata, save_id: str, iter_label: str) -> None
     plt.savefig(os.path.join(plot_dir, plot_name), format="pdf", bbox_inches="tight")
     plt.close()
 
+
 # compares runga-kutta vs euler
 def comparison_plots(
     euler_model_data: modelrundata,
@@ -145,6 +262,22 @@ def comparison_plots(
     label: str,
     title: str,
 ) -> None:
+    """
+        Plots  model data against each other in a specific folder
+    Parameters
+    ----------
+    euler model_data, RK8_model_data
+        The model data for the models to compare
+    save_id, iter_label
+        Where to save plot
+    label
+        What type, should be "Competition" or "Predator Prey"
+    title
+        Title of plot
+    Returns
+    -------
+    None
+    """
     fig, axes = plt.subplots(1)
     axes.plot(
         euler_model_data.times,
@@ -177,13 +310,27 @@ def comparison_plots(
     axes.legend(loc="upper left")
     axes.set_ylabel("Population")
     axes.set_xlabel("Time (Years)")
-    plot_dir = make_plotting_folder(save_id, iter_label) #make sure you have plotting folder
+    plot_dir = make_plotting_folder(
+        save_id, iter_label
+    )  # make sure you have plotting folder
     plot_name = "Comparison_RK8_Euler" + label + "_Plot.pdf"
     plt.savefig(os.path.join(plot_dir, plot_name), format="pdf", bbox_inches="tight")
     plt.close()
 
 
 def phase_plot(model_data: modelrundata, save_id: str, iter_label: str) -> None:
+    """
+        Plots one model data of Prey Population against Predator Population
+    Parameters
+    ----------
+    model_data
+        The model data
+    save_id, iter_label
+        Where to save plot
+    Returns
+    -------
+    None
+    """
     fig, axes = plt.subplots(1)
     axes.plot(model_data.N1, model_data.N2, color="b", label="Phase - Prey & Pred")
     axes.set_ylabel("Predator Species")
@@ -193,8 +340,36 @@ def phase_plot(model_data: modelrundata, save_id: str, iter_label: str) -> None:
     plt.savefig(os.path.join(plot_dir, plot_name), format="pdf", bbox_inches="tight")
     plt.close()
 
-#Takes in parameters a,b,c,d and others and runs euler and RK8
-def run_models(model_params):
+
+# Takes in parameters a,b,c,d and others and runs euler and RK8
+def run_models(
+    model_params,
+) -> tuple[modelrundata, modelrundata, modelrundata, modelrundata]:
+    """
+    Runs the Euler and RK8 method for both competition and predator prey
+        Parameters
+    ----------
+    model_params
+        Holds all model_params, listed here
+    save_id
+        What folder to save in
+    iter_label
+        What sub folder to save in
+    alpha, beta, delta, gamma
+        ODE Parameters
+    N1initial, N2initial
+        Intial Population for both species
+    t_step_comp
+        Time Step For Competition
+    t_step_preypred
+        Time Step for Predator Prey
+    t_stop
+        What time to stop at (Usually 100 years)
+    Returns
+    -------
+    Tuple (4 Items)
+        All of the model run data of all 4 options
+    """
     save_id = model_params["save_id"]
     iter_label = model_params["iter_label"]
     alpha = model_params["alpha"]
@@ -304,6 +479,7 @@ def run_models(model_params):
 def main():
     """
     Let's start going through the lab! We'll go through each question in the lab.
+
     """
 
     default_model_params = {
@@ -353,37 +529,45 @@ def main():
         model_params["iter_label"] = "N2_" + str(round(N2_step, 2))
         model_params["N2initial"] = N2_step
         run_models(model_params)
-    population_prey_max=[]
+    population_prey_max = []
     population_pred_max = []
     for i in modelsruns:
         population_prey_max.append(max(i[1].N1))
         population_pred_max.append(max(i[1].N2))
-    N1_Values =np.arange(0.1, 1, 0.1)
+    N1_Values = np.arange(0.1, 1, 0.1)
     fig, axes = plt.subplots(1)
     axes.plot(N1_Values, population_prey_max, color="b", label="N1 Max Population")
-    axes.plot(N1_Values,population_pred_max, color="r", label="N2 Max Population")
+    axes.plot(N1_Values, population_pred_max, color="r", label="N2 Max Population")
     axes.legend(loc="upper left")
     axes.set_ylabel("Population")
     axes.set_xlabel("N1")
-    plt.show()
-    #plot_dir = make_plotting_folder(save_id, iter_label)
+    plot_dir = make_plotting_folder(
+        model_params["save_id"], "Overall"
+    )  # make sure you have plotting folder
+    plot_name = "Max_Population_Plot.pdf"
+    plt.savefig(os.path.join(plot_dir, plot_name), format="pdf", bbox_inches="tight")
+    plt.close()
+    # plot_dir = make_plotting_folder(save_id, iter_label)
 
-
-    #Pedator Prey ModelComparoisons
-    colors = ['b','g','r','c','m','y','k','#A52A2A','#FF7F00']
+    # Pedator Prey ModelComparoisons
+    colors = ["b", "g", "r", "c", "m", "y", "k", "#A52A2A", "#FF7F00"]
     fig, axes = plt.subplots(1)
-    for counter, i in enumerate(modelsruns): 
-        
-        axes.plot(i[1].N1, i[1].N2, color=colors[counter], label=round(N1_Values[counter],2))
+    for counter, i in enumerate(modelsruns):
+        axes.plot(
+            i[1].N1, i[1].N2, color=colors[counter], label=round(N1_Values[counter], 2)
+        )
     axes.set_ylabel("Predator Species")
     axes.set_xlabel("Prey Species")
-    #plot_dir = make_plotting_folder(save_id, iter_label)
-    #plot_name = "Phase_" + model_data.label + "_Plot.pdf"
-    #plt.savefig(os.path.join(plot_dir, plot_name), format="pdf", bbox_inches="tight")
-    #plt.close()
     axes.legend()
+    plot_dir = make_plotting_folder(
+        model_params["save_id"], "Overall"
+    )  # make sure you have plotting folder
+    plot_name = "AllPreyPredPhaseDiagrams.pdf"
+    plt.savefig(os.path.join(plot_dir, plot_name), format="pdf", bbox_inches="tight")
+    plt.close()
+
     plt.show()
-    
-    
+
+
 if __name__ == "__main__":
     main()
