@@ -206,7 +206,7 @@ def main():
 
 #Question 5 - Nuclear Winter = True
         # number of layers set to 5
-        # solar irradiance set to 1370 W/m^-2
+        # solar irradiance set to 1350 W/m^-2
         # emissivity set to 0.5
         # albedo = 0 as nuclear_winter=True
         
@@ -220,8 +220,9 @@ def main():
     plt.xlabel('Temperature (K)')
     plt.ylabel('Atmospheric Layer (altitude)')
     plt.show()
-    
-
+    nuketemp = nuclear_results.temperatures[0]
+    print('Question 5: Earth''s surface temperature under a nuclear winter scenario would be'
+          , round(nuketemp),'K' )
     
 if __name__ == "__main__":
     main()
