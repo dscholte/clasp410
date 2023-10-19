@@ -53,12 +53,14 @@ def run_atmmodel(nlayers, solar, emissivity, albedo, nuclear_winter=False):
     s = s_0 * (1/4) * (1 - albedo)
     sigma = 5.67*(10**-8)
     
+    #initialize open matrix for temp values
     temperatures = np.zeros(nlayers+1)
     
-    
+    #initialize matrices
     A = np.zeros([nlayers+1, nlayers+1])
     b = np.zeros(nlayers+1)
     
+    #Fill matrix A 
     for i in range(nlayers+1):
         for j in range(nlayers+1):
             value = -9999
@@ -115,12 +117,22 @@ def run_atmmodel(nlayers, solar, emissivity, albedo, nuclear_winter=False):
     
 def main():
     
-    #normaltemp = run_atmmodel(2, 1370, 0.3, 0.3, False)
-    #nucleartemp = run_atmmodel(2, 1370, 0.3, 0.3, True)
-    #plt.plot(normaltemp.layers, normaltemp.temperatures)
-    #plt.plot(nucleartemp.layers, nucleartemp.temperatures)
+#Question 2 - Validation
+
+    emissivities = []
+    surfacetemp = []
+    results = run_atmmodel(5, 1350, .95, 0.33, False)
     
-#Question 3    
+    plt.plot(results.layers, results.temperatures)
+    plt.title('Question 2: Validation')
+    plt.xlabel('Atmospheric Layers')
+    plt.ylabel('Surface Temp(K)')
+    plt.show()
+    
+    
+#Question 3   
+
+ 
     emissivities = []
     surfacetemp = []
     for emissivity in np.arange(0.01, 1, 0.01):
@@ -128,32 +140,44 @@ def main():
         emissivities.append(emissivity)
         surfacetemp.append(results.temperatures[0])
     
+    plt.axhline(288, color='r', linestyle='-.')
     plt.plot(emissivities, surfacetemp)
-    plt.title('Surface Temp related to Emissivity Values')
+    plt.title('Question 3A: Surface Temp / Emissivity Values')
     plt.xlabel('Emissivity')
     plt.ylabel('Surface Temp(K)')
     plt.show()
     
+    tempgoal2 = (min(range(len(surfacetemp)),
+              key=lambda i: (abs(surfacetemp[i]-288)))+1)/100
+    
+    print('Question 3A: Our model predicts an emissivity of',tempgoal2,
+          'is required to have a temperature of 288 K on Earth.')
     
     nlayers1 = []
     surfacetemp = []
-    for nlayers in np.arange(2, 50, 1):
+    for nlayers in np.arange(2, 25, 1):
         results = run_atmmodel(nlayers, 1350, 0.255, 0.33, False)
         nlayers1.append(nlayers)
         surfacetemp.append(results.temperatures[0])
         
-    plt.plot(surfacetemp, nlayers1)
-    plt.title('Surface Temp related to number of layers')
-    plt.xlabel('Temperature (K)')
-    plt.ylabel('Number of atm.layers')
+    plt.axhline(288, color='r', linestyle='-.')    
+    plt.plot(nlayers1, surfacetemp)
+    
+    plt.title('Question 3B: Surface Temp / No. of Layers')
+    plt.ylabel('Temperature (K)')
+    plt.xlabel('Atmospheric Layers')
     plt.show()
     
+    layergoal1 = (min(range(len(surfacetemp)),
+              key=lambda i: abs(surfacetemp[i]-288)))+2
+    
+    print('Question 3B: Our model predicts that',layergoal1,'layers are required to reach 288 K on Earth.')
     
 #Question 4 
-    # number of layers is independent variable changed in for loop
-    # solar irradiance set to 2600 W/m^-2
-    # emissivity set to 1
-    # albedo set to 0, no shortwave radiation reflected
+        # number of layers is independent variable changed in for loop
+        # solar irradiance set to 2600 W/m^-2
+        # emissivity set to 1
+        # albedo set to 0, no shortwave radiation reflected
     
     nlayers1 = []
     surfacetemp1 = []
@@ -161,35 +185,40 @@ def main():
         results = run_atmmodel(nlayers, 2600, 1, 0.33, False)
         nlayers1.append(nlayers)
         surfacetemp1.append(results.temperatures[0])
-    
+        
+    plt.axhline(700, color='r', linestyle='-.')
     plt.plot(nlayers1, surfacetemp1)
-    plt.axhline(700, color='r', linestyle='--')
-    plt.title('Venus surface temp related to number of layers')
+    
+    plt.title('Question 4: Venus surface temp')
     plt.ylabel('Temperature (K)')
-    plt.xlabel('Number of atm.layers')
+    plt.xlabel('Atmospheric Layers')
     plt.show()
 
     #Find numbers of layers that brings us closest to Venus Temp.
     layergoal = (min(range(len(surfacetemp1)),
               key=lambda i: abs(surfacetemp1[i]-700)))+2
     
-    print(layergoal)
+    print('Question 4:',layergoal,'perfectly absorbing layers are required to reach 700 K on Venus.')
    
     
 
 
 
-    #Question 5 - Nuclear Winter = True
+#Question 5 - Nuclear Winter = True
         # number of layers set to 5
         # solar irradiance set to 1370 W/m^-2
         # emissivity set to 0.5
         # albedo = 0 as nuclear_winter=True
+        
+        # matrix b[-1] = -solar flux as nuclear_winter=True (all incoming
+        # solar radition is absorbed by top layer)
     
     nuclear_results = run_atmmodel(5, 1350, 0.5, 0.33, True)
     
     plt.plot(nuclear_results.temperatures, nuclear_results.layers)
+    plt.title('Question 5: Nuclear Bomb')
     plt.xlabel('Temperature (K)')
-    plt.ylabel('Number of atm.layers')
+    plt.ylabel('Atmospheric Layer (altitude)')
     plt.show()
     
 
