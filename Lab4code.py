@@ -38,6 +38,10 @@ def run_heat(dt = 0.0001, dx = 0.01, csquare=.02, xmax = 1.0, tmax=2):
     
     '''
     
+    if (dt > ((dx**2)/(2*csquare))):
+        raise ValueError('Stability Criterion not met' + 
+                         f'dt={dt:6.2f}; dx={dx:6.2f}; csquare={csquare}')
+    
     #Set constant r
     r = csquare * dt/dx**2
     
@@ -67,13 +71,14 @@ def run_heat(dt = 0.0001, dx = 0.01, csquare=.02, xmax = 1.0, tmax=2):
     
 x, t, temp = run_heat()
 fig, axes = plt.subplots(1, 1)
-#map = axes.pcolor(t, x, temp, cmap='YlOrRd', vmin=0, vmax=1)
+
 map = axes.pcolor(t, x, temp, cmap='inferno', vmin=0, vmax=1)
 
 plt.colorbar(map, ax=axes, label='Temperature ($C$)')
+plt.title('Dirichlet Boundary Condition')
 plt.show()
-    
-    
+
+
 def run_neumann(dt = 0.0002, dx = 0.02, csquare=.025, xmax = 1.0, tmax=2):
 
     #Set constant r
@@ -106,10 +111,12 @@ def run_neumann(dt = 0.0002, dx = 0.02, csquare=.025, xmax = 1.0, tmax=2):
 
 x1, t1, temp1 = run_neumann()
 fig, axes = plt.subplots(1, 1)
-#map = axes.pcolor(t, x, temp, cmap='YlOrRd', vmin=0, vmax=1)
+
 map = axes.pcolor(t1, x1, temp1, cmap='inferno', vmin=0, vmax=1)
 
+
 plt.colorbar(map, ax=axes, label='Temperature ($C$)')
+plt.title('Neumann Boundary Condition')
 plt.show()
     
     
