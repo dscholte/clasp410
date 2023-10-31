@@ -7,7 +7,6 @@ Created on Tue Oct 24 09:29:57 2023
 
 import numpy as np
 import matplotlib.pyplot as plt
-from dataclasses import dataclass
 
 plt.style.use("fivethirtyeight")
 
@@ -119,24 +118,6 @@ plt.show()
 #-----------------------------------------------------------------    
 #Question 2
 
-
- 
-# using list comprehension
-# adding K to each element
-'''
-def temp_kanger(t, add,temps1=False):
-    
-    For an array of times in days, return timeseries of temperature for
-    Kangerlussuaq, Greenland.
-
-    
-    if temps1==True:
-        t_kanger = t_kanger+add
-    t_amp = (t_kanger - t_kanger.mean()).max()
-    
-    return t_amp*np.sin(np.pi/180 * t - np.pi/2) + temps1.mean()
-
-'''
 t_kanger = np.array([-19.7, -21.0, -17., -8.4, 2.3, 8.4,
                      10.7, 8.5, 3.1, -6.0, -12.0, -16.9])
 
