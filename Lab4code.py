@@ -11,27 +11,18 @@ from dataclasses import dataclass
 
 plt.style.use("fivethirtyeight")
 
-#spacestep in mm
-#timestep in seconds
-
 
 def run_heat(dt, dx, csquare, xmax, tmax):
 
     '''
-    
-    
     Returns
     ----
-    
     x: numpy vector
         - array of position locations
-        
     t: numpy vector
         - array of time points
-        
     temp: numpy 2D array
         - temperature as a function of time & space
-        
     xmax, tmax : float, default to 1 and 0.2
     
     '''
@@ -114,35 +105,45 @@ plt.title('Dirichlet Boundary Condition')
 plt.show()
 
 #Neumann
-x1, t1, temp1 = run_neumann(0.0002, 0.02, .025, 1.0, 2)
-fig, axes = plt.subplots(1, 1)
+#x1, t1, temp1 = run_neumann(0.0002, 0.02, .025, 1.0, 2)
+#fig, axes = plt.subplots(1, 1)
 
-map = axes.pcolor(t1, x1, temp1, cmap='inferno', vmin=0, vmax=1)
+#map = axes.pcolor(t1, x1, temp1, cmap='inferno', vmin=0, vmax=1)
 
 
-plt.colorbar(map, ax=axes, label='Temperature ($C$)')
-plt.title('Neumann Boundary Condition')
-plt.show()
+#plt.colorbar(map, ax=axes, label='Temperature ($C$)')
+#plt.title('Neumann Boundary Condition')
+#plt.show()
     
     
 #-----------------------------------------------------------------    
 #Question 2
-#csquare mm^2/s to #m^2/day
-
 
 t_kanger = np.array([-19.7, -21.0, -17., -8.4, 2.3, 8.4,
 10.7, 8.5, 3.1, -6.0, -12.0, -16.9])
-    
-def temp_kanger(t):
+ 
+# initializing K
+ques3addahalf = 0.5
+ques3addone = 1
+ques3addthree = 3
+ 
+# using list comprehension
+# adding K to each element
+addhalf = [x + ques3addahalf for x in t_kanger]
+addone = [x + ques3addone for x in t_kanger]
+addthree = [x + ques3addthree for x in t_kanger]
+
+
+def temp_kanger(t,temps1):
     '''
     For an array of times in days, return timeseries of temperature for
     Kangerlussuaq, Greenland.
     '''
-    t_amp = (t_kanger - t_kanger.mean()).max()
-    return t_amp*np.sin(np.pi/180 * t - np.pi/2) + t_kanger.mean()
+    t_amp = (temps1 - temps1.mean()).max()
+    return t_amp*np.sin(np.pi/180 * t - np.pi/2) + temps1.mean()
     
 
-def greenland(dt, dx, csquare, xmax, tmax):
+def greenland(dt, dx, csquare, xmax, tmax, climate=temp_kanger(t,t_kanger)):
     
     landc2 = csquare*(1/1000000)*24*60*60
     
@@ -164,7 +165,7 @@ def greenland(dt, dx, csquare, xmax, tmax):
     temp = np.zeros([M,N])
 
     temp[0, :] = 5
-    temp[-1, :] = temp_kanger(t)
+    temp[-1, :] = temp_kanger(t,t_kanger)
     temp[1:-1,0] = 0
     
     
@@ -177,26 +178,82 @@ def greenland(dt, dx, csquare, xmax, tmax):
     return x, t, temp
 
 
-#Question 2 Results
-xland, tland, templand = greenland(.5, 1.0, 0.25, 100, 1000)
-fig, axes = plt.subplots(1, 1)
+def plot_temp(x, time, temp, axes, xlabel='Time ($s$)', title='',
+              ylabel='Distance ($m$)', clabel=r'Temperature ($^{\circ} C$)',
+              cmap='inferno', inverty=False, **kwargs):
+    '''
+    Add a pcolor plot of the heat equation to `axes`. Add a color bar.
 
-map = axes.pcolor(tland, xland, templand, cmap='seismic', vmin=-25, vmax=25)
+    Parameters
+    ----------
+    x
+        Array of position values
+    time
+        Array of time values 
+    temp
+        array of temperature solution
+    xlabel, ylabel, title, clabel
+        Axes labels and titles
+    cmap : inferno
+        Matplotlib colormap name.
+    '''
 
+    map = axes.pcolor(time, x, temp, cmap=cmap, **kwargs)
+    plt.colorbar(map, ax=axes, label=clabel)
+    axes.set_xlabel(xlabel)
+    axes.set_ylabel(ylabel)
+    axes.set_title(title)
+    
 
-plt.colorbar(map, ax=axes, label='Temperature ($C$)')
-plt.title('Greenland')
-plt.show()
+def profile():
+    
+    dt = 10
+    dx = 1.0
+    years = 50
+    
+    x, time, temp = greenland(dt, dx, 0.25, 100, years*365, temp_kanger(t,t_kanger))
+    
+    maxtemp = np.abs(temp).max()
+    fig, ax = plt.subplots(1, 1, figsize=(10, 8))
+    
+    plot_temp(x, time/365., temp, ax, xlabel='Time (Years)', ylabel='Depth ($m$)',
+              cmap='seismic', vmin=-maxtemp, vmax=maxtemp,
+              clabel='Temperature', 
+              title='Question 2')
+    fig.tight_layout()
+    
+    # Create fianl temp profile
+    fig, ax2 = plt.subplots(1, 1, figsize=(10, 8))
+    ax2.plot(temp[:, int(-365/dt):].min(axis=1), x, color='blue', label='Winter')
+    ax2.plot(temp[:, int(-365/dt):].max(axis=1), x, '--', color='red', label='Summer')
+
+    
+    ax2.legend(loc='best')
+    ax2.set_ylabel('Depth (m)')
+    ax2.set_xlabel('Temperature (degC)')
+    ax2.set_title('Ground Temperature')
+    ax2.set_xlim([-7, 8])
+    ax2.set_ylim([-5, 105])
+    fig.tight_layout()
     
     
+profile()
     
+    #Question 3
     
+def three():
     
+    dt = 10
+    dx = 1.0
+    nyear = 50
+    xhalf, timehalf, temphalf = greenland(dt, dx, 0.25, 100, nyear*365, temp_kanger(t,addhalf))    
+    xone, timeone, tempone = greenland(dt, dx, 0.25, 100, nyear*365, temp_kanger(t,addone))    
+    xthree, timethree, tempthree = greenland(dt, dx, 0.25, 100, nyear*365, temp_kanger(t,addthree))    
+
+    fig, ax3 = plt.subplots(1, 1, figsize=(10, 8))
+    ax3.plot(temphalf[:, int(-365/dt):].min(axis=1), xhalf, color='blue', label='Winter')
+    ax3.plot(temphalf[:, int(-365/dt):].max(axis=1), xhalf, '--', color='red', label='Summer')
+    fig
     
-    
-    
-    
-    
-    
-    
+three()
     
