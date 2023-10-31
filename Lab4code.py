@@ -119,31 +119,38 @@ plt.show()
 #-----------------------------------------------------------------    
 #Question 2
 
-t_kanger = np.array([-19.7, -21.0, -17., -8.4, 2.3, 8.4,
-10.7, 8.5, 3.1, -6.0, -12.0, -16.9])
- 
-# initializing K
-ques3addahalf = 0.5
-ques3addone = 1
-ques3addthree = 3
+
  
 # using list comprehension
 # adding K to each element
-addhalf = [x + ques3addahalf for x in t_kanger]
-addone = [x + ques3addone for x in t_kanger]
-addthree = [x + ques3addthree for x in t_kanger]
+'''
+def temp_kanger(t, add,temps1=False):
+    
+    For an array of times in days, return timeseries of temperature for
+    Kangerlussuaq, Greenland.
 
+    
+    if temps1==True:
+        t_kanger = t_kanger+add
+    t_amp = (t_kanger - t_kanger.mean()).max()
+    
+    return t_amp*np.sin(np.pi/180 * t - np.pi/2) + temps1.mean()
 
-def temp_kanger(t,temps1):
+'''
+t_kanger = np.array([-19.7, -21.0, -17., -8.4, 2.3, 8.4,
+                     10.7, 8.5, 3.1, -6.0, -12.0, -16.9])
+
+def temp_kanger(t, warming):
     '''
     For an array of times in days, return timeseries of temperature for
     Kangerlussuaq, Greenland.
     '''
-    t_amp = (temps1 - temps1.mean()).max()
-    return t_amp*np.sin(np.pi/180 * t - np.pi/2) + temps1.mean()
-    
+    t_amp = (t_kanger - t_kanger.mean()).max()
 
-def greenland(dt, dx, csquare, xmax, tmax, climate=temp_kanger(t,t_kanger)):
+    return t_amp*np.sin(np.pi/180 * t - np.pi/2) + t_kanger.mean() + warming
+
+
+def greenland(dt, dx, csquare, xmax, tmax, addtemp, question=False):
     
     landc2 = csquare*(1/1000000)*24*60*60
     
@@ -165,7 +172,11 @@ def greenland(dt, dx, csquare, xmax, tmax, climate=temp_kanger(t,t_kanger)):
     temp = np.zeros([M,N])
 
     temp[0, :] = 5
-    temp[-1, :] = temp_kanger(t,t_kanger)
+    if question==True:
+        temp[-1, :] = temp_kanger(t,addtemp)
+    else:
+        temp[-1, :] = temp_kanger(t,0)
+        
     temp[1:-1,0] = 0
     
     
@@ -211,7 +222,7 @@ def profile():
     dx = 1.0
     years = 50
     
-    x, time, temp = greenland(dt, dx, 0.25, 100, years*365, temp_kanger(t,t_kanger))
+    x, time, temp = greenland(dt, dx, 0.25, 100, years*365, temp_kanger(t,0))
     
     maxtemp = np.abs(temp).max()
     fig, ax = plt.subplots(1, 1, figsize=(10, 8))
@@ -237,23 +248,55 @@ def profile():
     fig.tight_layout()
     
     
+    return
 profile()
     
+#------------------------------------------------
     #Question 3
     
-def three():
+def plot_three():
     
     dt = 10
     dx = 1.0
     nyear = 50
-    xhalf, timehalf, temphalf = greenland(dt, dx, 0.25, 100, nyear*365, temp_kanger(t,addhalf))    
-    xone, timeone, tempone = greenland(dt, dx, 0.25, 100, nyear*365, temp_kanger(t,addone))    
-    xthree, timethree, tempthree = greenland(dt, dx, 0.25, 100, nyear*365, temp_kanger(t,addthree))    
+    xhalf, timehalf, temphalf = greenland(dt, dx, 0.25, 100, nyear*365, 0.5, question=True)    
+    xone, timeone, tempone = greenland(dt, dx, 0.25, 100, nyear*365, 1, question=True)    
+    xthree, timethree, tempthree = greenland(dt, dx, 0.25, 100, nyear*365, 3, question=True)    
 
     fig, ax3 = plt.subplots(1, 1, figsize=(10, 8))
     ax3.plot(temphalf[:, int(-365/dt):].min(axis=1), xhalf, color='blue', label='Winter')
     ax3.plot(temphalf[:, int(-365/dt):].max(axis=1), xhalf, '--', color='red', label='Summer')
-    fig
+    ax3.legend(loc='best')
+    ax3.set_ylabel('Depth (m)')
+    ax3.set_xlabel('Temperature (degC)')
+    ax3.set_title('Ground Temperature warming 0.5degC')
+    ax3.set_xlim([-7, 8])
+    ax3.set_ylim([-5, 105])
+
+    fig.tight_layout()
     
-three()
+    fig, ax4 = plt.subplots(1, 1, figsize=(10, 8))
+    ax4.plot(tempone[:, int(-365/dt):].min(axis=1), xone, color='blue', label='Winter')
+    ax4.plot(tempone[:, int(-365/dt):].max(axis=1), xone, '--', color='red', label='Summer')
+    ax4.legend(loc='best')
+    ax4.set_ylabel('Depth (m)')
+    ax4.set_xlabel('Temperature (degC)')
+    ax4.set_title('Ground Temperature warming 1degC')
+    ax4.set_xlim([-7, 8])
+    ax4.set_ylim([-5, 105])
+    fig.tight_layout()
+    
+    fig, ax5 = plt.subplots(1, 1, figsize=(10, 8))
+    ax5.plot(tempthree[:, int(-365/dt):].min(axis=1), xthree, color='blue', label='Winter')
+    ax5.plot(tempthree[:, int(-365/dt):].max(axis=1), xthree, '--', color='red', label='Summer')
+    ax5.legend(loc='best')
+    ax5.set_ylabel('Depth (m)')
+    ax5.set_xlabel('Temperature (degC)')
+    ax5.set_title('Ground Temperature warming 3degC')
+    ax5.set_xlim([-7, 8])
+    ax5.set_ylim([-5, 105])
+    fig.tight_layout()
+    return 
+
+plot_three()
     
