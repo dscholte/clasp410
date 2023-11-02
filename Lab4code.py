@@ -125,20 +125,57 @@ def apply_dirichlet_and_validate_model():
     # Convert to an array and transpose it to get correct ordering:
     sol10p3 = np.array(sol10p3).transpose()
     assert (sol10p3 - temp < 0.00001).all()
-    plot("Dirichlet Boundary Condition", x, t, temp)
-
-
-def plot(title, x, t, temp):
-    fig, axes = plt.subplots(1, 1)
-    map = axes.pcolor(t, x, temp, cmap="inferno", vmin=0, vmax=1)
-    plt.colorbar(map, ax=axes, label="Temperature ($C$)")
-    axes.set_title(title)
+    plot_temp(
+        x,
+        t,
+        temp,
+        "Temperature (degC)",
+        "Dirichlet Boundary Condition",
+        "Depth (m)",
+        "Temperature ($C$)",
+        "inferno",
+        False,
+    )
 
 
 # Neumann
 def apply_neumann():
     x1, t1, temp1 = run_heat(0.0002, 0.02, 0.025, 1.0, 2, ModelMode.hot_rods, True)
-    plot("Neumann Boundary Condition", x1, t1, temp1)
+    plot_temp(
+        x1,
+        t1,
+        temp1,
+        "Temperature (degC)",
+        "Neumann Boundary Condition",
+        "Depth (m)",
+        "Temperature ($C$)",
+        "inferno",
+        False,
+    )
+
+
+def plot_greenland_ground_profile(title, x, t, temp):
+    fig, ax = plt.subplots(1, 1, figsize=(10, 8))
+    ax.plot(
+        temp[:, int(-365 / (t[1] - t[0])) :].min(axis=1),
+        x,
+        color="blue",
+        label="Winter",
+    )
+    ax.plot(
+        temp[:, int(-365 / (t[1] - t[0])) :].max(axis=1),
+        x,
+        "--",
+        color="red",
+        label="Summer",
+    )
+    ax.legend(loc="best")
+    ax.set_ylabel("Depth (m)")
+    ax.set_xlabel("Temperature (degC)")
+    ax.set_title(title)
+    ax.set_xlim([-7, 8])
+    ax.set_ylim([-5, 105])
+    fig.tight_layout()
 
 
 def temp_kanger(t, warming):
@@ -158,7 +195,6 @@ def plot_temp(
     x,
     time,
     temp,
-    axes,
     xlabel="Time ($s$)",
     title="",
     ylabel="Distance ($m$)",
@@ -183,7 +219,7 @@ def plot_temp(
     cmap : inferno
         Matplotlib colormap name.
     """
-
+    fig, axes = plt.subplots(1, 1, figsize=(10, 8))
     map = axes.pcolor(time, x, temp, cmap=cmap, **kwargs)
     plt.colorbar(map, ax=axes, label=clabel)
     axes.set_xlabel(xlabel)
@@ -191,7 +227,7 @@ def plot_temp(
     axes.set_title(title)
 
 
-def run_profile():
+def run_general_permafrost_model():
     dt = 10
     dx = 1.0
     xmax = 100
@@ -209,13 +245,11 @@ def run_profile():
         add_temps,
     )
     maxtemp = np.abs(temp).max()
-    fig, ax = plt.subplots(1, 1, figsize=(10, 8))
 
     plot_temp(
         x,
         time / 365.0,
         temp,
-        ax,
         xlabel="Time (Years)",
         ylabel="Depth ($m$)",
         cmap="seismic",
@@ -224,22 +258,7 @@ def run_profile():
         clabel="Temperature",
         title="Question 2",
     )
-    fig.tight_layout()
-
-    # Create fianl temp profile
-    fig, ax2 = plt.subplots(1, 1, figsize=(10, 8))
-    ax2.plot(temp[:, int(-365 / dt) :].min(axis=1), x, color="blue", label="Winter")
-    ax2.plot(
-        temp[:, int(-365 / dt) :].max(axis=1), x, "--", color="red", label="Summer"
-    )
-
-    ax2.legend(loc="best")
-    ax2.set_ylabel("Depth (m)")
-    ax2.set_xlabel("Temperature (degC)")
-    ax2.set_title("Ground Temperature")
-    ax2.set_xlim([-7, 8])
-    ax2.set_ylim([-5, 105])
-    fig.tight_layout()
+    plot_greenland_ground_profile("Ground Temperature", x, time, temp)
     return
 
 
@@ -247,7 +266,7 @@ def run_profile():
 # Question 3
 
 
-def plot_three():
+def run_general_permafrost_model_with_ghg_effect():
     dt = 10
     dx = 1.0
     nyear = 50
@@ -265,7 +284,6 @@ def plot_three():
         add_temps,
     )
     add_temps = 1
-
     xone, timeone, tempone = run_heat(
         dt,
         dx,
@@ -285,79 +303,33 @@ def plot_three():
         ModelMode.greenland,
         add_temps,
     )
-
-    fig, ax3 = plt.subplots(1, 1, figsize=(10, 8))
-    ax3.plot(
-        temphalf[:, int(-365 / dt) :].min(axis=1), xhalf, color="blue", label="Winter"
+    plot_greenland_ground_profile(
+        "Ground Temperature warming 0.5degC", xhalf, timehalf, temphalf
     )
-    ax3.plot(
-        temphalf[:, int(-365 / dt) :].max(axis=1),
-        xhalf,
-        "--",
-        color="red",
-        label="Summer",
+    plot_greenland_ground_profile(
+        "Ground Temperature warming 1degC", xone, timeone, tempone
     )
-    ax3.legend(loc="best")
-    ax3.set_ylabel("Depth (m)")
-    ax3.set_xlabel("Temperature (degC)")
-    ax3.set_title("Ground Temperature warming 0.5degC")
-    ax3.set_xlim([-7, 8])
-    ax3.set_ylim([-5, 105])
-
-    fig.tight_layout()
-
-    fig, ax4 = plt.subplots(1, 1, figsize=(10, 8))
-    ax4.plot(
-        tempone[:, int(-365 / dt) :].min(axis=1), xone, color="blue", label="Winter"
+    plot_greenland_ground_profile(
+        "Ground Temperature warming 3degC", xthree, timethree, tempthree
     )
-    ax4.plot(
-        tempone[:, int(-365 / dt) :].max(axis=1),
-        xone,
-        "--",
-        color="red",
-        label="Summer",
-    )
-    ax4.legend(loc="best")
-    ax4.set_ylabel("Depth (m)")
-    ax4.set_xlabel("Temperature (degC)")
-    ax4.set_title("Ground Temperature warming 1degC")
-    ax4.set_xlim([-7, 8])
-    ax4.set_ylim([-5, 105])
-    fig.tight_layout()
-
-    fig, ax5 = plt.subplots(1, 1, figsize=(10, 8))
-    ax5.plot(
-        tempthree[:, int(-365 / dt) :].min(axis=1), xthree, color="blue", label="Winter"
-    )
-    ax5.plot(
-        tempthree[:, int(-365 / dt) :].max(axis=1),
-        xthree,
-        "--",
-        color="red",
-        label="Summer",
-    )
-    ax5.legend(loc="best")
-    ax5.set_ylabel("Depth (m)")
-    ax5.set_xlabel("Temperature (degC)")
-    ax5.set_title("Ground Temperature warming 3degC")
-    ax5.set_xlim([-7, 8])
-    ax5.set_ylim([-5, 105])
-    fig.tight_layout()
     return
 
 
 def main():
     # ---------------------------------------------------------------
-
+    # Question 1
     apply_dirichlet_and_validate_model()
 
-    ## Neumann for Funzies
+    # Neumann for funzies
     apply_neumann()
 
     # -----------------------------------------------------------------
     # Question 2
-    run_profile()
-    plot_three()
+    run_general_permafrost_model()
+
+    # -----------------------------------------------------------------
+    # Question 3
+    run_general_permafrost_model_with_ghg_effect()
     plt.show()
 
 
