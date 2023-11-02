@@ -13,6 +13,16 @@ plt.style.use("fivethirtyeight")
 
 def run_heat(dt, dx, csquare, xmax, tmax):
     """
+    Parameters
+    ----------
+    xmax, tmax : float
+        default to 1 and 0.2
+    dt
+        Time Step
+    dx
+        Spatial Step
+    csquare
+        Thermal Diffusivity Squared
     Returns
     ----
     x: numpy vector
@@ -21,7 +31,6 @@ def run_heat(dt, dx, csquare, xmax, tmax):
         - array of time points
     temp: numpy 2D array
         - temperature as a function of time & space
-    xmax, tmax : float, default to 1 and 0.2
 
     """
 
@@ -58,6 +67,27 @@ def run_heat(dt, dx, csquare, xmax, tmax):
 
 
 def run_neumann(dt, dx, csquare, xmax, tmax):
+    """
+    Parameters
+    ----------
+    xmax, tmax : float
+        default to 1 and 0.2
+    dt
+        Time Step
+    dx
+        Spatial Step
+    csquare
+        Thermal Diffusivity Squared
+    Returns
+    ----
+    x: numpy vector
+        - array of position locations
+    t: numpy vector
+        - array of time points
+    temp: numpy 2D array
+        - temperature as a function of time & space
+
+    """
     if dt > ((dx**2) / (2 * csquare)):
         raise ValueError(
             "Stability Criterion not met"
@@ -137,6 +167,31 @@ def temp_kanger(t, warming):
 
 
 def greenland(dt, dx, csquare, xmax, tmax, addtemp, question=False):
+    """
+    Parameters
+    ----------
+    xmax, tmax : float
+        default to 1 and 0.2
+    dt
+        Time Step
+    dx
+        Spatial Step
+    csquare
+        Thermal Diffusivity Squared
+    addtemp
+        GHG Effect
+    question: Bool
+        Should you apply addtemp (The Greenhouse Gas Effect)
+    Returns
+    ----
+    x: numpy vector
+        - array of position locations
+    t: numpy vector
+        - array of time points
+    temp: numpy 2D array
+        - temperature as a function of time & space
+
+    """
     landc2 = csquare * (1 / 1000000) * 24 * 60 * 60
 
     if dt > ((dx**2) / (2 * landc2)):
