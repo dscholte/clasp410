@@ -12,12 +12,20 @@ from enum import Enum  # Enum ships with python standard library
 plt.style.use("fivethirtyeight")
 
 
-class model_mode(Enum):
+class ModelMode(Enum):
     hot_rods = 1
     greenland = 2
 
 
-def run_heat(dt, dx, csquare, xmax, tmax, is_neumann=False):
+def run_heat(
+    dt,
+    dx,
+    csquare,
+    xmax,
+    tmax,
+    model_mode=ModelMode.hot_rods,
+    is_hotrods_neumann_or_greenland_add_temps=0,
+):
     """
     Parameters
     ----------
@@ -59,15 +67,22 @@ def run_heat(dt, dx, csquare, xmax, tmax, is_neumann=False):
 
     # Temp solution array
     temp = np.zeros([M, N])
-
-    temp[0, :] = 0
-    temp[-1, :] = 0
-    temp[:, 0] = 4 * x - 4 * (x**2)
+    if model_mode == ModelMode.hot_rods:
+        temp[0, :] = 0
+        temp[-1, :] = 0
+        temp[:, 0] = 4 * x - 4 * (x**2)
+    elif model_mode == ModelMode.greenland:
+        temp[0, :] = 5
+        temp[-1, :] = temp_kanger(t, is_hotrods_neumann_or_greenland_add_temps)
+        temp[1:-1, 0] = 0
 
     # Solution to equation
     for j in range(0, N - 1):
         for i in range(1, M - 1):
-            if is_neumann:
+            if (
+                model_mode == ModelMode.hot_rods
+                and is_hotrods_neumann_or_greenland_add_temps == 1
+            ):
                 temp[0, j] = temp[1, j]
                 temp[-1, j] = temp[-2, j]
             temp[i, j + 1] = (1 - (2 * r)) * temp[i, j] + r * (
@@ -90,6 +105,7 @@ def apply_dirichlet_and_validate_model():
         thermal_diffusivity_squared,
         size_of_rod,
         amount_of_time,
+        ModelMode.hot_rods,
         False,
     )
 
@@ -117,12 +133,11 @@ def plot(title, x, t, temp):
     map = axes.pcolor(t, x, temp, cmap="inferno", vmin=0, vmax=1)
     plt.colorbar(map, ax=axes, label="Temperature ($C$)")
     axes.set_title(title)
-    plt.show()
 
 
 # Neumann
 def apply_neumann():
-    x1, t1, temp1 = run_heat(0.0002, 0.02, 0.025, 1.0, 2, True)
+    x1, t1, temp1 = run_heat(0.0002, 0.02, 0.025, 1.0, 2, ModelMode.hot_rods, True)
     plot("Neumann Boundary Condition", x1, t1, temp1)
 
 
@@ -137,70 +152,6 @@ def temp_kanger(t, warming):
     t_amp = (t_kanger - t_kanger.mean()).max()
 
     return t_amp * np.sin(np.pi / 180 * t - np.pi / 2) + t_kanger.mean() + warming
-
-
-def greenland(dt, dx, csquare, xmax, tmax, addtemp, question=False):
-    """
-    Parameters
-    ----------
-    xmax, tmax : float
-        default to 1 and 0.2
-    dt
-        Time Step
-    dx
-        Spatial Step
-    csquare
-        Thermal Diffusivity Squared
-    addtemp
-        GHG Effect
-    question: Bool
-        Should you apply addtemp (The Greenhouse Gas Effect)
-    Returns
-    ----
-    x: numpy vector
-        - array of position locations
-    t: numpy vector
-        - array of time points
-    temp: numpy 2D array
-        - temperature as a function of time & space
-
-    """
-    landc2 = csquare * (1 / 1000000) * 24 * 60 * 60
-
-    if dt > ((dx**2) / (2 * landc2)):
-        raise ValueError(
-            "Stability Criterion not met"
-            + f"dt={dt:6.2f}; dx={dx:6.2f}; csquare={csquare}"
-        )
-
-    # Set constant r
-    r = landc2 * dt / dx**2
-
-    # Create space and time grids
-    x = np.arange(0, xmax + dx, dx)
-    t = np.arange(0, tmax + dt, dt)
-    # Save number of points
-    M, N = x.size, t.size
-
-    # Temp solution array
-    temp = np.zeros([M, N])
-
-    temp[0, :] = 5
-    if question == True:
-        temp[-1, :] = temp_kanger(t, addtemp)
-    else:
-        temp[-1, :] = temp_kanger(t, 0)
-
-    temp[1:-1, 0] = 0
-
-    # Solution to equation
-    for j in range(0, N - 1):
-        for i in range(1, M - 1):
-            temp[i, j + 1] = (1 - (2 * r)) * temp[i, j] + r * (
-                temp[i + 1, j] + temp[i - 1, j]
-            )
-
-    return x, t, temp
 
 
 def plot_temp(
@@ -243,12 +194,20 @@ def plot_temp(
 def run_profile():
     dt = 10
     dx = 1.0
+    xmax = 100
     years = 50
-
-    x, time, temp = greenland(
-        dt, dx, 0.25, 100, years * 365, temp_kanger(np.arange(0, years + dt, dt), 0)
+    c_square = 0.25
+    landc2 = c_square * (1 / 1000000) * 24 * 60 * 60
+    add_temps = 0
+    x, time, temp = run_heat(
+        dt,
+        dx,
+        landc2,
+        xmax,
+        years * 365,
+        ModelMode.greenland,
+        add_temps,
     )
-
     maxtemp = np.abs(temp).max()
     fig, ax = plt.subplots(1, 1, figsize=(10, 8))
 
@@ -281,7 +240,6 @@ def run_profile():
     ax2.set_xlim([-7, 8])
     ax2.set_ylim([-5, 105])
     fig.tight_layout()
-    plt.show()
     return
 
 
@@ -293,12 +251,39 @@ def plot_three():
     dt = 10
     dx = 1.0
     nyear = 50
-    xhalf, timehalf, temphalf = greenland(
-        dt, dx, 0.25, 100, nyear * 365, 0.5, question=True
+    xmax = 100
+    c_square = 0.25
+    landc2 = c_square * (1 / 1000000) * 24 * 60 * 60
+    add_temps = 0.5
+    xhalf, timehalf, temphalf = run_heat(
+        dt,
+        dx,
+        landc2,
+        xmax,
+        nyear * 365,
+        ModelMode.greenland,
+        add_temps,
     )
-    xone, timeone, tempone = greenland(dt, dx, 0.25, 100, nyear * 365, 1, question=True)
-    xthree, timethree, tempthree = greenland(
-        dt, dx, 0.25, 100, nyear * 365, 3, question=True
+    add_temps = 1
+
+    xone, timeone, tempone = run_heat(
+        dt,
+        dx,
+        landc2,
+        xmax,
+        nyear * 365,
+        ModelMode.greenland,
+        add_temps,
+    )
+    add_temps = 3
+    xthree, timethree, tempthree = run_heat(
+        dt,
+        dx,
+        landc2,
+        xmax,
+        nyear * 365,
+        ModelMode.greenland,
+        add_temps,
     )
 
     fig, ax3 = plt.subplots(1, 1, figsize=(10, 8))
@@ -373,6 +358,7 @@ def main():
     # Question 2
     run_profile()
     plot_three()
+    plt.show()
 
 
 if __name__ == "__main__":
