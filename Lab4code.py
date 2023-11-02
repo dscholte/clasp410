@@ -122,19 +122,52 @@ def run_neumann(dt, dx, csquare, xmax, tmax):
     return x, t, temp
 
 
+def validate_model():
+    ## Validate Solver - Hot Rods ##
+    size_of_rod = 1  # Meters
+    spatial_step = 0.2  # Meters
+    amount_of_time = 0.2  # Seconds
+    time_step = 0.02  # Seconds
+    thermal_diffusivity_squared = 1  # Constant
+    x, t, temp = run_heat(
+        time_step,
+        spatial_step,
+        thermal_diffusivity_squared,
+        size_of_rod,
+        amount_of_time,
+    )
+
+    sol10p3 = [
+        [0.000000, 0.640000, 0.960000, 0.960000, 0.640000, 0.000000],
+        [0.000000, 0.480000, 0.800000, 0.800000, 0.480000, 0.000000],
+        [0.000000, 0.400000, 0.640000, 0.640000, 0.400000, 0.000000],
+        [0.000000, 0.320000, 0.520000, 0.520000, 0.320000, 0.000000],
+        [0.000000, 0.260000, 0.420000, 0.420000, 0.260000, 0.000000],
+        [0.000000, 0.210000, 0.340000, 0.340000, 0.210000, 0.000000],
+        [0.000000, 0.170000, 0.275000, 0.275000, 0.170000, 0.000000],
+        [0.000000, 0.137500, 0.222500, 0.222500, 0.137500, 0.000000],
+        [0.000000, 0.111250, 0.180000, 0.180000, 0.111250, 0.000000],
+        [0.000000, 0.090000, 0.145625, 0.145625, 0.090000, 0.000000],
+        [0.000000, 0.072812, 0.117813, 0.117813, 0.072812, 0.000000],
+    ]
+    # Convert to an array and transpose it to get correct ordering:
+    sol10p3 = np.array(sol10p3).transpose()
+    assert (sol10p3 - temp < 0.00001).all()
+    fig, axes = plt.subplots(1, 1)
+
+    map = axes.pcolor(t, x, temp, cmap="inferno", vmin=0, vmax=1)
+    plt.colorbar(map, ax=axes, label="Temperature ($C$)")
+    plt.title("Dirichlet Boundary Condition")
+    plt.show()
+
+
 # ---------------------------------------------------------------
 # Validation Code Question 1
 
 
 # Dirichlet
-x, t, temp = run_heat(0.02, 0.2, 1, 1, 0.2)
-fig, axes = plt.subplots(1, 1)
+validate_model()
 
-map = axes.pcolor(t, x, temp, cmap="inferno", vmin=0, vmax=1)
-
-plt.colorbar(map, ax=axes, label="Temperature ($C$)")
-plt.title("Dirichlet Boundary Condition")
-plt.show()
 
 # Neumann
 # x1, t1, temp1 = run_neumann(0.0002, 0.02, .025, 1.0, 2)
@@ -272,7 +305,9 @@ def profile():
     dx = 1.0
     years = 50
 
-    x, time, temp = greenland(dt, dx, 0.25, 100, years * 365, temp_kanger(t, 0))
+    x, time, temp = greenland(
+        dt, dx, 0.25, 100, years * 365, temp_kanger(np.arange(0, years + dt, dt), 0)
+    )
 
     maxtemp = np.abs(temp).max()
     fig, ax = plt.subplots(1, 1, figsize=(10, 8))
@@ -306,7 +341,7 @@ def profile():
     ax2.set_xlim([-7, 8])
     ax2.set_ylim([-5, 105])
     fig.tight_layout()
-
+    plt.show()
     return
 
 
