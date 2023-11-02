@@ -7,11 +7,17 @@ Created on Tue Oct 24 09:29:57 2023
 
 import numpy as np
 import matplotlib.pyplot as plt
+from enum import Enum  # Enum ships with python standard library
 
 plt.style.use("fivethirtyeight")
 
 
-def run_heat(dt, dx, csquare, xmax, tmax):
+class model_mode(Enum):
+    hot_rods = 1
+    greenland = 2
+
+
+def run_heat(dt, dx, csquare, xmax, tmax, is_neumann=False):
     """
     Parameters
     ----------
@@ -23,6 +29,8 @@ def run_heat(dt, dx, csquare, xmax, tmax):
         Spatial Step
     csquare
         Thermal Diffusivity Squared
+    is_neumann
+        Is the boundary conditions dirichlet (False) or neumann (True)
     Returns
     ----
     x: numpy vector
@@ -59,6 +67,9 @@ def run_heat(dt, dx, csquare, xmax, tmax):
     # Solution to equation
     for j in range(0, N - 1):
         for i in range(1, M - 1):
+            if is_neumann:
+                temp[0, j] = temp[1, j]
+                temp[-1, j] = temp[-2, j]
             temp[i, j + 1] = (1 - (2 * r)) * temp[i, j] + r * (
                 temp[i + 1, j] + temp[i - 1, j]
             )
@@ -66,63 +77,7 @@ def run_heat(dt, dx, csquare, xmax, tmax):
     return x, t, temp
 
 
-def run_neumann(dt, dx, csquare, xmax, tmax):
-    """
-    Parameters
-    ----------
-    xmax, tmax : float
-        default to 1 and 0.2
-    dt
-        Time Step
-    dx
-        Spatial Step
-    csquare
-        Thermal Diffusivity Squared
-    Returns
-    ----
-    x: numpy vector
-        - array of position locations
-    t: numpy vector
-        - array of time points
-    temp: numpy 2D array
-        - temperature as a function of time & space
-
-    """
-    if dt > ((dx**2) / (2 * csquare)):
-        raise ValueError(
-            "Stability Criterion not met"
-            + f"dt={dt:6.2f}; dx={dx:6.2f}; csquare={csquare}"
-        )
-
-    # Set constant r
-    r = csquare * dt / dx**2
-
-    # Create space and time grids
-    x = np.arange(0, xmax + dx, dx)
-    t = np.arange(0, tmax + dt, dt)
-    # Save number of points
-    M, N = x.size, t.size
-
-    # Temp solution array
-    temp = np.zeros([M, N])
-
-    temp[0, :] = 0
-    temp[-1, :] = 0
-    temp[:, 0] = 4 * x - 4 * (x**2)
-
-    # Solution to equation
-    for j in range(0, N - 1):
-        temp[0, j] = temp[1, j]
-        temp[-1, j] = temp[-2, j]
-        for i in range(1, M - 1):
-            temp[i, j + 1] = (1 - (2 * r)) * temp[i, j] + r * (
-                temp[i + 1, j] + temp[i - 1, j]
-            )
-
-    return x, t, temp
-
-
-def validate_model():
+def apply_dirichlet_and_validate_model():
     ## Validate Solver - Hot Rods ##
     size_of_rod = 1  # Meters
     spatial_step = 0.2  # Meters
@@ -135,6 +90,7 @@ def validate_model():
         thermal_diffusivity_squared,
         size_of_rod,
         amount_of_time,
+        False,
     )
 
     sol10p3 = [
@@ -153,32 +109,30 @@ def validate_model():
     # Convert to an array and transpose it to get correct ordering:
     sol10p3 = np.array(sol10p3).transpose()
     assert (sol10p3 - temp < 0.00001).all()
-    fig, axes = plt.subplots(1, 1)
+    plot("Dirichlet Boundary Condition", x, t, temp)
 
+
+def plot(title, x, t, temp):
+    fig, axes = plt.subplots(1, 1)
     map = axes.pcolor(t, x, temp, cmap="inferno", vmin=0, vmax=1)
     plt.colorbar(map, ax=axes, label="Temperature ($C$)")
-    plt.title("Dirichlet Boundary Condition")
+    axes.set_title(title)
     plt.show()
+
+
+# Neumann
+def apply_neumann():
+    x1, t1, temp1 = run_heat(0.0002, 0.02, 0.025, 1.0, 2, True)
+    plot("Neumann Boundary Condition", x1, t1, temp1)
 
 
 # ---------------------------------------------------------------
 # Validation Code Question 1
 
+apply_dirichlet_and_validate_model()
 
-# Dirichlet
-validate_model()
-
-
-# Neumann
-# x1, t1, temp1 = run_neumann(0.0002, 0.02, .025, 1.0, 2)
-# fig, axes = plt.subplots(1, 1)
-
-# map = axes.pcolor(t1, x1, temp1, cmap='inferno', vmin=0, vmax=1)
-
-
-# plt.colorbar(map, ax=axes, label='Temperature ($C$)')
-# plt.title('Neumann Boundary Condition')
-# plt.show()
+## Neumann for Funzies
+apply_neumann()
 
 
 # -----------------------------------------------------------------
