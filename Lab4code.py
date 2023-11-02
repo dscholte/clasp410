@@ -126,28 +126,14 @@ def apply_neumann():
     plot("Neumann Boundary Condition", x1, t1, temp1)
 
 
-# ---------------------------------------------------------------
-# Validation Code Question 1
-
-apply_dirichlet_and_validate_model()
-
-## Neumann for Funzies
-apply_neumann()
-
-
-# -----------------------------------------------------------------
-# Question 2
-
-t_kanger = np.array(
-    [-19.7, -21.0, -17.0, -8.4, 2.3, 8.4, 10.7, 8.5, 3.1, -6.0, -12.0, -16.9]
-)
-
-
 def temp_kanger(t, warming):
     """
     For an array of times in days, return timeseries of temperature for
     Kangerlussuaq, Greenland.
     """
+    t_kanger = np.array(
+        [-19.7, -21.0, -17.0, -8.4, 2.3, 8.4, 10.7, 8.5, 3.1, -6.0, -12.0, -16.9]
+    )
     t_amp = (t_kanger - t_kanger.mean()).max()
 
     return t_amp * np.sin(np.pi / 180 * t - np.pi / 2) + t_kanger.mean() + warming
@@ -254,7 +240,7 @@ def plot_temp(
     axes.set_title(title)
 
 
-def profile():
+def run_profile():
     dt = 10
     dx = 1.0
     years = 50
@@ -298,8 +284,6 @@ def profile():
     plt.show()
     return
 
-
-profile()
 
 # ------------------------------------------------
 # Question 3
@@ -377,4 +361,19 @@ def plot_three():
     return
 
 
-plot_three()
+def main():
+    # ---------------------------------------------------------------
+
+    apply_dirichlet_and_validate_model()
+
+    ## Neumann for Funzies
+    apply_neumann()
+
+    # -----------------------------------------------------------------
+    # Question 2
+    run_profile()
+    plot_three()
+
+
+if __name__ == "__main__":
+    main()
