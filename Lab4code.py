@@ -37,8 +37,10 @@ def run_heat(
         Spatial Step
     csquare
         Thermal Diffusivity Squared
-    is_neumann
-        Is the boundary conditions dirichlet (False) or neumann (True)
+    model_mode
+        Is this a hotrods or Greenland problem
+    is_hotrods_neumann_or_greenland_add_temps
+        Is the boundary conditions dirichlet (False) or neumann (True), or if the model mode is greenland, what is the ghg impact
     Returns
     ----
     x: numpy vector
@@ -236,16 +238,8 @@ def run_general_permafrost_model():
     landc2 = c_square * (1 / 1000000) * 24 * 60 * 60
     add_temps = 0
     x, time, temp = run_heat(
-        dt,
-        dx,
-        landc2,
-        xmax,
-        years * 365,
-        ModelMode.greenland,
-        add_temps,
+        dt, dx, landc2, xmax, years * 365, ModelMode.greenland, add_temps
     )
-    maxtemp = np.abs(temp).max()
-
     plot_temp(
         x,
         time / 365.0,
@@ -253,17 +247,13 @@ def run_general_permafrost_model():
         xlabel="Time (Years)",
         ylabel="Depth ($m$)",
         cmap="seismic",
-        vmin=-maxtemp,
-        vmax=maxtemp,
+        vmin=-np.abs(temp).max(),
+        vmax=np.abs(temp).max(),
         clabel="Temperature",
         title="Question 2",
     )
     plot_greenland_ground_profile("Ground Temperature", x, time, temp)
     return
-
-
-# ------------------------------------------------
-# Question 3
 
 
 def run_general_permafrost_model_with_ghg_effect():
@@ -275,33 +265,15 @@ def run_general_permafrost_model_with_ghg_effect():
     landc2 = c_square * (1 / 1000000) * 24 * 60 * 60
     add_temps = 0.5
     xhalf, timehalf, temphalf = run_heat(
-        dt,
-        dx,
-        landc2,
-        xmax,
-        nyear * 365,
-        ModelMode.greenland,
-        add_temps,
+        dt, dx, landc2, xmax, nyear * 365, ModelMode.greenland, add_temps
     )
     add_temps = 1
     xone, timeone, tempone = run_heat(
-        dt,
-        dx,
-        landc2,
-        xmax,
-        nyear * 365,
-        ModelMode.greenland,
-        add_temps,
+        dt, dx, landc2, xmax, nyear * 365, ModelMode.greenland, add_temps
     )
     add_temps = 3
     xthree, timethree, tempthree = run_heat(
-        dt,
-        dx,
-        landc2,
-        xmax,
-        nyear * 365,
-        ModelMode.greenland,
-        add_temps,
+        dt, dx, landc2, xmax, nyear * 365, ModelMode.greenland, add_temps
     )
     plot_greenland_ground_profile(
         "Ground Temperature warming 0.5degC", xhalf, timehalf, temphalf
