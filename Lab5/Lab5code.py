@@ -8,6 +8,14 @@ Created on Thu Nov 16 10:55:08 2023
 import numpy as np
 import matplotlib.pyplot as plt
 
+radearth=6357000
+lambda_heat=100
+density = 1020 #kg/m3
+dz = 50 #meters
+specheat = 4.2 * 10**6 # J / m3 / K
+emiss = 1
+albedo = 0.3
+sigma = 5.67 * 10**-8 # J / m2 / s / K4
 
 def temp_warm(lats_in):
     '''
@@ -122,7 +130,7 @@ def gen_grid(npoints=18):
     
     return dlat, lats, edge
 
-def snowearth(npoints=18, dt = 1, tstop = 10000, radearth=6357000, lambda_heat=100 , dlat = 10, S0=1370):
+def snowearth(npoints=18, dt = 1, tstop = 10000, dlat = 10, S0=1370, dosphere=False, upinsol=False):
     '''
     aye docstring
     
@@ -133,12 +141,15 @@ def snowearth(npoints=18, dt = 1, tstop = 10000, radearth=6357000, lambda_heat=1
     
     '''
     dlat, lats, edges = gen_grid(npoints)
+        
+    nsteps = int(tstop/dt)
     
-    delta_t = dt
+    delta_t = dt*365*24*3600
     delta_y = 2*np.pi*radearth * (dlat/360)
+
     
     #change units lambda
-    lambda_heat_year = lambda_heat * 60 * 60 * 24 * 365
+    #lambda_heat_year = lambda_heat * 60 * 60 * 24 * 365
     
     identity_mat = np.identity(npoints)
     
@@ -160,16 +171,9 @@ def snowearth(npoints=18, dt = 1, tstop = 10000, radearth=6357000, lambda_heat=1
     A_mat = (1/(delta_y**2))*A_mat
    
     #L = I - deltat*lambda*A
-    L_mat = identity_mat - (lambda_heat_year*delta_t*A_mat)
+    L_mat = identity_mat - (lambda_heat*delta_t*A_mat)
+    L_inv = np.linalg.inv(L_mat)
     
-    #invert L and matrix multiply to create values for diffusion
-    for i in range(0,tstop):
-        L_inv = np.linalg.inv(L_mat)
-        T_warm = np.matmul(L_inv,T_warm)
-        
-    
-    #L = I - deltat*lambda*A
-    #f = deltat*lambda*B*T_warm_ * 
     
     B = np.zeros((npoints,npoints))
     B[np.arange(npoints-1), np.arange(npoints-1)+1] = 1
@@ -182,39 +186,46 @@ def snowearth(npoints=18, dt = 1, tstop = 10000, radearth=6357000, lambda_heat=1
     #dAxz/dlat, doesn't change 
     dAxz = np.matmul(B, Axz) / (Axz * 4 * delta_y**2)
     
-    #get total number of steps
-    nsteps = int(tstop/delta_t)
-    
     insol = insolation(S0, lats)
     
     for i in range(nsteps):
         
-        spherecorr = lambda_heat_year*delta_t*np.matmul(B, T_warm)*dAxz
+        if dosphere==True:
+            #calc sphere
+            spherecorr = lambda_heat*delta_t*np.matmul(B, T_warm)*dAxz
+            
+            T_warm += spherecorr
+            
+        else:
+            spherecorr=0
+            
+        if upinsol==True:
+            #calc radiative
+            radiative = (delta_t/(density*specheat*dz))* (insol*(1-albedo) - (emiss*sigma*((T_warm+273.0)**4)))
+            
+            
+            T_warm += radiative
         
         
-        T_warm += spherecorr
-        
-        
-        radiative = (1-0.3)
-        
-        T_warm += delta_t*insol
-        
-        T_warm = np.matmul(L_inv, T_warm)
-        
-        
+        T_warm = np.matmul(L_inv,T_warm)
     
-    
-    plt.plot(lats,T_warm)
-    plt.plot(lats,T_warm_init)
+    return lats, T_warm, T_warm_init
 
-    return lats, T_warm
+lats, T_warm, T_warm_init = snowearth(dosphere=False)
 
+plt.plot(lats,T_warm_init, color='b',label='Init')
+plt.plot(lats,T_warm, color='r',label='diffuse')
 
+lats, T_warm, T_warm_init = snowearth(dosphere=True)
+plt.plot(lats,T_warm, color = 'y',label='diffuse+sphere')
 
+lats, T_warm, T_warm_init = snowearth(dosphere=True, upinsol=True)
+plt.plot(lats,T_warm, color = 'g', label='diffuse+sphere+rad')
 
+plt.xlabel('Latitude')
+plt.ylabel('Temperature (degC)')
+plt.legend()
+plt.show()
 
+#---------------------------------------------------------------------------
 
-
-
-    
-snowearth()
