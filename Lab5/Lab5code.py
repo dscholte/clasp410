@@ -9,12 +9,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 radearth=6357000
-lambda_heat=100
+
 density = 1020 #kg/m3
 dz = 50 #meters
 specheat = 4.2 * 10**6 # J / m3 / K
-emiss = 1
-albedo = 0.3
+
+albedo_gnd = 0.3
+albedo_ice = 0.6
 sigma = 5.67 * 10**-8 # J / m2 / s / K4
 
 def temp_warm(lats_in):
@@ -130,7 +131,7 @@ def gen_grid(npoints=18):
     
     return dlat, lats, edge
 
-def snowearth(npoints=18, dt = 1, tstop = 10000, dlat = 10, S0=1370, dosphere=False, upinsol=False):
+def snowearth(lambda_heat=100, emiss=1, npoints=18, dt = 1, tstop = 10000, dlat = 10, S0=1370, dosphere=False, upinsol=False):
     '''
     aye docstring
     
@@ -201,7 +202,7 @@ def snowearth(npoints=18, dt = 1, tstop = 10000, dlat = 10, S0=1370, dosphere=Fa
             
         if upinsol==True:
             #calc radiative
-            radiative = (delta_t/(density*specheat*dz))* (insol*(1-albedo) - (emiss*sigma*((T_warm+273.0)**4)))
+            radiative = (delta_t/(density*specheat*dz))* (insol*(1-albedo_gnd) - (emiss*sigma*((T_warm+273.0)**4)))
             
             
             T_warm += radiative
@@ -211,9 +212,13 @@ def snowearth(npoints=18, dt = 1, tstop = 10000, dlat = 10, S0=1370, dosphere=Fa
     
     return lats, T_warm, T_warm_init
 
+
+#----------------------------------------------------------
+#Question 1
+
 lats, T_warm, T_warm_init = snowearth(dosphere=False)
 
-plt.plot(lats,T_warm_init, color='b',label='Init')
+plt.plot(lats,T_warm_init, color='b',label='Initial')
 plt.plot(lats,T_warm, color='r',label='diffuse')
 
 lats, T_warm, T_warm_init = snowearth(dosphere=True)
@@ -222,10 +227,58 @@ plt.plot(lats,T_warm, color = 'y',label='diffuse+sphere')
 lats, T_warm, T_warm_init = snowearth(dosphere=True, upinsol=True)
 plt.plot(lats,T_warm, color = 'g', label='diffuse+sphere+rad')
 
+plt.title('Question 1')
 plt.xlabel('Latitude')
 plt.ylabel('Temperature (degC)')
 plt.legend()
 plt.show()
 
 #---------------------------------------------------------------------------
+#Question 2
+lats, T_warm, T_warm_init = snowearth(dosphere=False)
+lats, T_warm2, T_warm_init = snowearth(lambda_heat=50, dosphere=True, upinsol=True)
+lats, T_warm3, T_warm_init = snowearth(emiss=0.75, dosphere=True, upinsol=True)
+
+plt.plot(lats,T_warm_init, color='b',label='Initial')
+plt.plot(lats,T_warm2, label='Lambda=50')
+plt.plot(lats,T_warm3, label=('Emissivity=0.75'))
+plt.title('Question 2 inquiry')
+plt.legend()
+plt.show()
+
+
+lats, T_warm, T_warm_init = snowearth(dosphere=False)
+lats, T_warm2, T_warm_init2 = snowearth(lambda_heat=50, emiss=.72, dosphere=True, upinsol=True)
+plt.plot(lats,T_warm_init, color='b',label='Initial')
+plt.plot(lats,T_warm2, color='r',label=('Lambda = 50, Emissivity = 0.72'))
+plt.title('Question 2 Final')
+plt.xlabel('Latitude')
+plt.ylabel('Temperature (degC)')
+plt.legend()
+plt.show()
+
+
+'''
+question 3 stuff
+# Update albedo based on conditions:
+loc_ice = Temp <= -10
+albedo[loc_ice] = albedo_ice
+albedo[~loc_ice] = albedo_gnd
+
+'''
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
