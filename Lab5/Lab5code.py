@@ -7,6 +7,7 @@ Created on Thu Nov 16 10:55:08 2023
 
 import numpy as np
 import matplotlib.pyplot as plt
+from statistics import mean
 
 radearth=6357000
 
@@ -137,7 +138,7 @@ def gen_grid(npoints=18):
     return dlat, lats, edge
 
 def snowearth(lambda_heat=100, emiss=1, npoints=18, dt = 1, tstop = 10000, \
-              dlat = 10, S0=1370, albedo=0.3, flash=False, dynalbedo=False, tempnorm=1, \
+              dlat = 10, S0=1370, albedo=0.3, gamma=1, usetemps=0, dynalbedo=False, tempnorm=1, \
                   dosphere=False, upinsol=False):
     '''
     aye docstring
@@ -173,6 +174,10 @@ def snowearth(lambda_heat=100, emiss=1, npoints=18, dt = 1, tstop = 10000, \
         T_warm = T_cold
         T_warm_init = T_warm
     
+    if tempnorm==4:
+        T_warm=usetemps
+        T_warm_init = T_warm
+    
     # Update albedo based on conditions:
     if dynalbedo==True:
         albedo = np.zeros(len(lats))
@@ -182,8 +187,6 @@ def snowearth(lambda_heat=100, emiss=1, npoints=18, dt = 1, tstop = 10000, \
     else:
         albedo = albedo
     
-    if flash==True:
-        albedo = 0.6
     #initialize A grid
     A_mat = -2*np.identity(len(lats))
     
@@ -213,7 +216,8 @@ def snowearth(lambda_heat=100, emiss=1, npoints=18, dt = 1, tstop = 10000, \
     #dAxz/dlat, doesn't change 
     dAxz = np.matmul(B, Axz) / (Axz * 4 * delta_y**2)
     
-    insol = insolation(S0, lats)
+    
+    insol = gamma * insolation(S0, lats)
     
     for i in range(nsteps):
         
@@ -296,6 +300,42 @@ plt.plot(lats,tempdyn3, label='Flash Freeze', color='g')
 plt.title('Question 3')
 plt.legend()
 plt.show()
+
+# flash freeze with albedo at 6 with warm earth is the same as dynamicalb with cold earth
+
+#---------------------------------------------------------------------------
+#Question 4
+
+gammavalsup = np.arange(0.4,1.45,.05)
+gammavalsdown = np.arange(1.4,0.35,-.05)
+gammavals = np.concatenate((gammavalsup, gammavalsdown))
+
+gamma1 = 0.4
+avgtemp = []
+while gamma1 < 1.45:
+    lats, tempgamma, tempdyninit = snowearth(tempnorm=3, gamma=gamma1, dosphere=True, upinsol=True)
+    gamma1 = gamma1 + 0.05
+    lats, tempgamma2, tempdyninit = snowearth(tempnorm=4, gamma=gamma1, usetemps=tempgamma,
+                                              dosphere=True, upinsol=True)
+    
+    avgtemp.append(mean(tempgamma2))
+print(len(avgtemp))
+#reset to 1.4
+gamma1 = gamma1-0.05
+
+#going downnnnn
+while gamma1 > .352:
+    lats, tempgamma3, tempdyninit = snowearth(tempnorm=3, gamma=gamma1, usetemps=tempgamma2, dosphere=True, upinsol=True)
+    gamma1 = gamma1 - 0.05
+    lats, tempgamma4, tempdyninit = snowearth(tempnorm=4, gamma=gamma1, usetemps=tempgamma3,
+                                              dosphere=True, upinsol=True)
+    
+    avgtemp.append(mean(tempgamma4))
+
+
+plt.plot(gammavals, avgtemp)
+
+
 
 
 
