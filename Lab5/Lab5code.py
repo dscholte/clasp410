@@ -14,9 +14,14 @@ density = 1020 #kg/m3
 dz = 50 #meters
 specheat = 4.2 * 10**6 # J / m3 / K
 
-albedo_gnd = 0.3
-albedo_ice = 0.6
+
 sigma = 5.67 * 10**-8 # J / m2 / s / K4
+
+T_hot = np.array([60., 60., 60., 60., 60., 60., 60., 60., 60., 60.,
+                   60., 60., 60., 60., 60., 60., 60., 60.])
+
+T_cold = np.array([-60., -60., -60., -60., -60., -60., -60., -60., -60., -60.,
+                   -60., -60., -60., -60., -60., -60., -60., -60.])
 
 def temp_warm(lats_in):
     '''
@@ -131,7 +136,9 @@ def gen_grid(npoints=18):
     
     return dlat, lats, edge
 
-def snowearth(lambda_heat=100, emiss=1, npoints=18, dt = 1, tstop = 10000, dlat = 10, S0=1370, dosphere=False, upinsol=False):
+def snowearth(lambda_heat=100, emiss=1, npoints=18, dt = 1, tstop = 10000, \
+              dlat = 10, S0=1370, albedo=0.3, flash=False, dynalbedo=False, tempnorm=1, \
+                  dosphere=False, upinsol=False):
     '''
     aye docstring
     
@@ -142,22 +149,41 @@ def snowearth(lambda_heat=100, emiss=1, npoints=18, dt = 1, tstop = 10000, dlat 
     
     '''
     dlat, lats, edges = gen_grid(npoints)
-        
+    
     nsteps = int(tstop/dt)
     
     delta_t = dt*365*24*3600
     delta_y = 2*np.pi*radearth * (dlat/360)
-
-    
-    #change units lambda
-    #lambda_heat_year = lambda_heat * 60 * 60 * 24 * 365
     
     identity_mat = np.identity(npoints)
     
-    #create values for original temperature line
-    T_warm = temp_warm(lats)
-    T_warm_init = T_warm
+    albedo_gnd=0.3
+    albedo_ice = 0.6
     
+    #create values for original temperature line
+    if tempnorm==1:
+        T_warm = temp_warm(lats)
+        T_warm_init = T_warm
+        
+    if tempnorm==2:
+        T_warm = T_hot
+        T_warm_init = T_warm
+        
+    if tempnorm==3:
+        T_warm = T_cold
+        T_warm_init = T_warm
+    
+    # Update albedo based on conditions:
+    if dynalbedo==True:
+        albedo = np.zeros(len(lats))
+        loc_ice = T_warm <= -10
+        albedo[loc_ice] = albedo_ice
+        albedo[~loc_ice] = albedo_gnd
+    else:
+        albedo = albedo
+    
+    if flash==True:
+        albedo = 0.6
     #initialize A grid
     A_mat = -2*np.identity(len(lats))
     
@@ -193,6 +219,7 @@ def snowearth(lambda_heat=100, emiss=1, npoints=18, dt = 1, tstop = 10000, dlat 
         
         if dosphere==True:
             #calc sphere
+            
             spherecorr = lambda_heat*delta_t*np.matmul(B, T_warm)*dAxz
             
             T_warm += spherecorr
@@ -202,7 +229,7 @@ def snowearth(lambda_heat=100, emiss=1, npoints=18, dt = 1, tstop = 10000, dlat 
             
         if upinsol==True:
             #calc radiative
-            radiative = (delta_t/(density*specheat*dz))* (insol*(1-albedo_gnd) - (emiss*sigma*((T_warm+273.0)**4)))
+            radiative = (delta_t/(density*specheat*dz))* (insol*(1-albedo) - (emiss*sigma*((T_warm+273.0)**4)))
             
             
             T_warm += radiative
@@ -258,21 +285,17 @@ plt.legend()
 plt.show()
 
 
-'''
-question 3 stuff
-# Update albedo based on conditions:
-loc_ice = Temp <= -10
-albedo[loc_ice] = albedo_ice
-albedo[~loc_ice] = albedo_gnd
-
-'''
-
-
-
-
-
-
-
+#---------------------------------------------------------------------------
+#Question 3
+lats, tempdyn, tempdyninit = snowearth(tempnorm=2, dynalbedo=True, dosphere=True, upinsol=True)
+lats, tempdyn2, tempdyninit = snowearth(tempnorm=3, dynalbedo=True, dosphere=True, upinsol=True)
+lats, tempdyn3, tempdyninit = snowearth(tempnorm=1, albedo=0.6, dosphere=True, upinsol=True)
+plt.plot(lats,tempdyn, label='Dynamic Albedo Hot Earth',color='r')
+plt.plot(lats,tempdyn2, label='Dynamic Albedo Cold Earth', color='b')
+plt.plot(lats,tempdyn3, label='Flash Freeze', color='g')
+plt.title('Question 3')
+plt.legend()
+plt.show()
 
 
 
