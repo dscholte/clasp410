@@ -59,6 +59,7 @@ def fire(prob_spread,prob_bare):
     #originate plot before fire spreads
     fig, ax = plt.subplots(1,1)
     ax.pcolor(forest[0,:,:], cmap=forest_cmap, vmin=1, vmax=3)
+    plt.close()
     
     #fire spread loop through number of iterations
     for k in range(1, numiters):
@@ -105,7 +106,7 @@ def fire(prob_spread,prob_bare):
         #plot current conditions
         fig, ax = plt.subplots(1,1)
         ax.pcolor(forest[k,:,:], cmap=forest_cmap, vmin=1, vmax=3)
-        
+        plt.close()
         # end loop if there are no more cells on fire and output # of iterations
         # it took to get there and number/percentage of cells that are bare
         if 3 not in forest[k,:,:]:
@@ -133,11 +134,13 @@ for i in spreadrange:
     spreadarray.append(percentagebare)
     
     
-plt.figure(figsize=(10,5))
+plt.figure(figsize=(12,8))
 plt.plot(spreadrange,spreadarray)
-plt.title('Percentage of cells that are bare with 1% of starting cells bare')
-plt.xlabel('Probability of Spread')
-plt.ylabel('Percentage of cells that are bare after fire')
+plt.title('Fraction of cells that are bare with 1% of starting cells bare', fontsize=20)
+plt.xlabel('Probability of Spread', fontsize=20)
+plt.ylabel('Fraction of cells that are bare after fire', fontsize=20)
+plt.xticks(fontsize=20)
+plt.yticks(fontsize=20)
 
 #initialize array of outputs from change in probbare values
 timearray2 = []
@@ -151,11 +154,13 @@ for i in barerange:
     numberbarearray2.append(numberofbare2)
     spreadarray2.append(percentagebare2)
 
-plt.figure(figsize=(10,5))
+plt.figure(figsize=(12,8))
 plt.plot(barerange,spreadarray2)
-plt.title('Percentage of cells that are bare with 50% chance of fire spread')
-plt.xlabel('Percentage of starting cells that are bare')
-plt.ylabel('Percentage of cells that are bare after fire')
+plt.title('Fraction of cells that are bare with 50% chance of fire spread', fontsize=20)
+plt.xlabel('Fraction of starting cells that are bare', fontsize=20)
+plt.ylabel('Fraction of cells that are bare after fire', fontsize=20)
+plt.xticks(fontsize=20)
+plt.yticks(fontsize=20)
 
     
     

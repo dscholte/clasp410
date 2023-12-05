@@ -42,6 +42,7 @@ def disease(prob_fatality,prob_immune):
     
     fig, ax = plt.subplots(1,1)
     ax.pcolor(area[0,:,:], cmap=area_cmap, vmin=1, vmax=4)
+    plt.close()
     
     #disease spread loop
     for k in range(1, numiters):
@@ -90,8 +91,9 @@ def disease(prob_fatality,prob_immune):
                         numberimmune = numberimmune + 1
                     
         #plot current conditions
-        fig, ax = plt.subplots(1,1)
-        ax.pcolor(area[k,:,:], cmap=area_cmap, vmin=1, vmax=4)
+        # fig, ax = plt.subplots(1,1)
+        # ax.pcolor(area[k,:,:], cmap=area_cmap, vmin=1, vmax=4)
+        # plt.close()
         
         # end loop if there are no more cells are sick and output # of iterations
         # it took to get there and number/percentage of cells that are dead
@@ -120,11 +122,13 @@ for i in fatalityrange:
     fatalityarray.append(percentagedead)
     
     
-plt.figure(figsize=(10,5))
+plt.figure(figsize=(12,8))
 plt.plot(fatalityrange,fatalityarray)
-plt.title('Percentage of cells that are dead with 1% of starting cells immune')
-plt.xlabel('Probability of Fatality')
-plt.ylabel('Percentage of cells that are dead after spread')
+plt.title('Fraction of cells that are dead with 1% of starting cells immune', fontsize=18)
+plt.xlabel('Probability of Fatality', fontsize=20)
+plt.ylabel('Fraction of cells that are dead after spread', fontsize=20)
+plt.xticks(fontsize=20)
+plt.yticks(fontsize=20)
 
 
 #initialize array of outputs from change in probimmune values
@@ -140,10 +144,11 @@ for i in immunerange:
     immunearray.append(percentagedead)
     
     
-plt.figure(figsize=(10,5))
+plt.figure(figsize=(12,8))
 plt.plot(immunerange,immunearray)
-plt.title('Percentage of cells that are dead with a 10% chance of death from the disease')
-plt.xlabel('Percentage of cells that begin with immunity from death (Vaccine)')
-plt.ylabel('Percentage of cells that are dead after spread')
-
+plt.title('Fraction of cells that are dead with a 10% chance of death from the disease', fontsize=20)
+plt.xlabel('Fraction of cells that begin with immunity from death (Vaccine)', fontsize=18)
+plt.ylabel('Fraction of cells that are dead after spread', fontsize=20)
+plt.xticks(fontsize=20)
+plt.yticks(fontsize=20)
 
