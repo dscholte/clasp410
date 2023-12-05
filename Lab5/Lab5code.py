@@ -14,15 +14,13 @@ radearth=6357000
 density = 1020 #kg/m3
 dz = 50 #meters
 specheat = 4.2 * 10**6 # J / m3 / K
-
-
 sigma = 5.67 * 10**-8 # J / m2 / s / K4
 
-T_hot = np.array([60., 60., 60., 60., 60., 60., 60., 60., 60., 60.,
-                   60., 60., 60., 60., 60., 60., 60., 60.])
+#T_hot = np.array([60., 60., 60., 60., 60., 60., 60., 60., 60., 60.,
+                  # 60., 60., 60., 60., 60., 60., 60., 60.])
 
-T_cold = np.array([-60., -60., -60., -60., -60., -60., -60., -60., -60., -60.,
-                   -60., -60., -60., -60., -60., -60., -60., -60.])
+#T_cold = np.array([-60., -60., -60., -60., -60., -60., -60., -60., -60., -60.,
+                   #-60., -60., -60., -60., -60., -60., -60., -60.])
 
 def temp_warm(lats_in):
     '''
@@ -137,7 +135,7 @@ def gen_grid(npoints=18):
     
     return dlat, lats, edge
 
-def snowearth(lambda_heat=100, emiss=1, npoints=18, dt = 1, tstop = 10000, \
+def snowearth(lambda_heat=100, emiss=1, npoints=50, dt = 1, tstop = 10000, \
               dlat = 10, S0=1370, albedo=0.3, gamma=1, usetemps=0, dynalbedo=False, tempnorm=1, \
                   dosphere=False, upinsol=False):
     '''
@@ -145,11 +143,19 @@ def snowearth(lambda_heat=100, emiss=1, npoints=18, dt = 1, tstop = 10000, \
     
     Parameters
     --------
-    npoints: integer, 18
+    npoints: integer, 
         number of latitude points
     
     '''
+    
+    
     dlat, lats, edges = gen_grid(npoints)
+    
+    
+    T_hot = np.zeros(len(lats))
+    T_hot = T_hot + 60
+    T_cold = np.zeros(len(lats))
+    T_cold = T_cold - 60
     
     nsteps = int(tstop/dt)
     
@@ -326,15 +332,15 @@ lats, tempgamma, tempdyninit = snowearth(lambda_heat=50, emiss=.72,tempnorm=3,
 avgtemp.append(mean(tempgamma))
 
 while gamma1 < 1.4:
-    lats, tempgamma, tempdyninit = snowearth(lambda_heat=50, emiss=.72,tempnorm=3, 
-                                             dynalbedo=True,gamma=gamma1, dosphere=True, upinsol=True)
+    # lats, tempgamma, tempdyninit = snowearth(lambda_heat=50, emiss=.72,tempnorm=3, 
+    #                                          dynalbedo=True,gamma=gamma1, dosphere=True, upinsol=True)
     
     gamma1 = gamma1 + 0.05
-    lats, tempgamma2, tempdyninit = snowearth(lambda_heat=50, emiss=.72,tempnorm=4, 
+    lats, tempgamma, tempdyninit = snowearth(lambda_heat=50, emiss=.72,tempnorm=4, 
                                               dynalbedo=True, gamma=gamma1, usetemps=tempgamma,
                                               dosphere=True, upinsol=True)
     
-    avgtemp.append(mean(tempgamma2))
+    avgtemp.append(mean(tempgamma))
 
 #reset to 1.4
 gamma1 = gamma1-0.05
@@ -342,19 +348,20 @@ gamma1 = gamma1-0.05
 avgtemp2 = []
 #going downnnnn
 while gamma1 > .352:
-    lats, tempgamma3, tempdyninit = snowearth(lambda_heat=50, emiss=.72,tempnorm=3, 
-                                              dynalbedo=True, gamma=gamma1, usetemps=tempgamma2, 
-                                              dosphere=True, upinsol=True)
+    # lats, tempgamma3, tempdyninit = snowearth(lambda_heat=50, emiss=.72,tempnorm=3, 
+    #                                           dynalbedo=True, gamma=gamma1, usetemps=tempgamma2, 
+    #                                           dosphere=True, upinsol=True)
     gamma1 = gamma1 - 0.05
-    lats, tempgamma4, tempdyninit = snowearth(lambda_heat=50, emiss=.72,tempnorm=4, 
-                                              dynalbedo=True, gamma=gamma1, usetemps=tempgamma3,
-                                                dosphere=True, upinsol=True)
+    lats, tempgamma, tempdyninit = snowearth(lambda_heat=50, emiss=.72,tempnorm=4, 
+                                              dynalbedo=True, gamma=gamma1, usetemps=tempgamma,
+                                              dosphere=True, upinsol=True)
     
-    avgtemp2.append(mean(tempgamma4))
+    avgtemp2.append(mean(tempgamma))
 
 
 plt.plot(gammavalsup, avgtemp, label='up')
 plt.plot(gammavalsdown, avgtemp2, label='down')
+plt.title('')
 plt.xlabel('gamma value')
 plt.ylabel('Avg. Temperature (degC)')
 plt.legend()
