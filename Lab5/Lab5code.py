@@ -323,7 +323,7 @@ gammavalsdown = np.arange(1.35,0.35,-.05)
 gammavals = np.concatenate((gammavalsup, gammavalsdown))
 
 
-
+#going up
 gamma1 = 0.4
 avgtemp = []
 
@@ -332,8 +332,6 @@ lats, tempgamma, tempdyninit = snowearth(lambda_heat=50, emiss=.72,tempnorm=3,
 avgtemp.append(mean(tempgamma))
 
 while gamma1 < 1.4:
-    # lats, tempgamma, tempdyninit = snowearth(lambda_heat=50, emiss=.72,tempnorm=3, 
-    #                                          dynalbedo=True,gamma=gamma1, dosphere=True, upinsol=True)
     
     gamma1 = gamma1 + 0.05
     lats, tempgamma, tempdyninit = snowearth(lambda_heat=50, emiss=.72,tempnorm=4, 
@@ -345,12 +343,12 @@ while gamma1 < 1.4:
 #reset to 1.4
 gamma1 = gamma1-0.05
 
-avgtemp2 = []
+
 #going downnnnn
+avgtemp2 = []
+
 while gamma1 > .352:
-    # lats, tempgamma3, tempdyninit = snowearth(lambda_heat=50, emiss=.72,tempnorm=3, 
-    #                                           dynalbedo=True, gamma=gamma1, usetemps=tempgamma2, 
-    #                                           dosphere=True, upinsol=True)
+    
     gamma1 = gamma1 - 0.05
     lats, tempgamma, tempdyninit = snowearth(lambda_heat=50, emiss=.72,tempnorm=4, 
                                               dynalbedo=True, gamma=gamma1, usetemps=tempgamma,
