@@ -179,13 +179,7 @@ def snowearth(lambda_heat=100, emiss=1, npoints=18, dt = 1, tstop = 10000, \
         T_warm_init = T_warm
     
     # Update albedo based on conditions:
-    if dynalbedo==True:
-        albedo = np.zeros(len(lats))
-        loc_ice = T_warm <= -10
-        albedo[loc_ice] = albedo_ice
-        albedo[~loc_ice] = albedo_gnd
-    else:
-        albedo = albedo
+    
     
     #initialize A grid
     A_mat = -2*np.identity(len(lats))
@@ -220,6 +214,14 @@ def snowearth(lambda_heat=100, emiss=1, npoints=18, dt = 1, tstop = 10000, \
     insol = gamma * insolation(S0, lats)
     
     for i in range(nsteps):
+        
+        if dynalbedo==True:
+            albedo = np.zeros(len(lats))
+            loc_ice = T_warm <= -10
+            albedo[loc_ice] = albedo_ice
+            albedo[~loc_ice] = albedo_gnd
+        else:
+            albedo = albedo
         
         if dosphere==True:
             #calc sphere
@@ -274,6 +276,8 @@ plt.plot(lats,T_warm_init, color='b',label='Initial')
 plt.plot(lats,T_warm2, label='Lambda=50')
 plt.plot(lats,T_warm3, label=('Emissivity=0.75'))
 plt.title('Question 2 inquiry')
+plt.xlabel('Latitude')
+plt.ylabel('Temperature (degC)')
 plt.legend()
 plt.show()
 
@@ -291,13 +295,15 @@ plt.show()
 
 #---------------------------------------------------------------------------
 #Question 3
-lats, tempdyn, tempdyninit = snowearth(tempnorm=2, dynalbedo=True, dosphere=True, upinsol=True)
-lats, tempdyn2, tempdyninit = snowearth(tempnorm=3, dynalbedo=True, dosphere=True, upinsol=True)
-lats, tempdyn3, tempdyninit = snowearth(tempnorm=1, albedo=0.6, dosphere=True, upinsol=True)
+lats, tempdyn, tempdyninit = snowearth(lambda_heat=50, emiss=.72,tempnorm=2, dynalbedo=True, dosphere=True, upinsol=True)
+lats, tempdyn2, tempdyninit = snowearth(lambda_heat=50, emiss=.72,tempnorm=3, dynalbedo=True, dosphere=True, upinsol=True)
+lats, tempdyn3, tempdyninit = snowearth(lambda_heat=50, emiss=.72,tempnorm=1, albedo=0.6, dosphere=True, upinsol=True)
 plt.plot(lats,tempdyn, label='Dynamic Albedo Hot Earth',color='r')
 plt.plot(lats,tempdyn2, label='Dynamic Albedo Cold Earth', color='b')
 plt.plot(lats,tempdyn3, label='Flash Freeze', color='g')
 plt.title('Question 3')
+plt.xlabel('Latitude')
+plt.ylabel('Temperature (degC)')
 plt.legend()
 plt.show()
 
@@ -307,33 +313,51 @@ plt.show()
 #Question 4
 
 gammavalsup = np.arange(0.4,1.45,.05)
-gammavalsdown = np.arange(1.4,0.35,-.05)
+gammavalsdown = np.arange(1.35,0.35,-.05)
 gammavals = np.concatenate((gammavalsup, gammavalsdown))
+
+
 
 gamma1 = 0.4
 avgtemp = []
-while gamma1 < 1.45:
-    lats, tempgamma, tempdyninit = snowearth(tempnorm=3, gamma=gamma1, dosphere=True, upinsol=True)
+
+lats, tempgamma, tempdyninit = snowearth(lambda_heat=50, emiss=.72,tempnorm=3, 
+                                         dynalbedo=True,gamma=gamma1, dosphere=True, upinsol=True)
+avgtemp.append(mean(tempgamma))
+
+while gamma1 < 1.4:
+    lats, tempgamma, tempdyninit = snowearth(lambda_heat=50, emiss=.72,tempnorm=3, 
+                                             dynalbedo=True,gamma=gamma1, dosphere=True, upinsol=True)
+    
     gamma1 = gamma1 + 0.05
-    lats, tempgamma2, tempdyninit = snowearth(tempnorm=4, gamma=gamma1, usetemps=tempgamma,
+    lats, tempgamma2, tempdyninit = snowearth(lambda_heat=50, emiss=.72,tempnorm=4, 
+                                              dynalbedo=True, gamma=gamma1, usetemps=tempgamma,
                                               dosphere=True, upinsol=True)
     
     avgtemp.append(mean(tempgamma2))
-print(len(avgtemp))
+
 #reset to 1.4
 gamma1 = gamma1-0.05
 
+avgtemp2 = []
 #going downnnnn
 while gamma1 > .352:
-    lats, tempgamma3, tempdyninit = snowearth(tempnorm=3, gamma=gamma1, usetemps=tempgamma2, dosphere=True, upinsol=True)
-    gamma1 = gamma1 - 0.05
-    lats, tempgamma4, tempdyninit = snowearth(tempnorm=4, gamma=gamma1, usetemps=tempgamma3,
+    lats, tempgamma3, tempdyninit = snowearth(lambda_heat=50, emiss=.72,tempnorm=3, 
+                                              dynalbedo=True, gamma=gamma1, usetemps=tempgamma2, 
                                               dosphere=True, upinsol=True)
+    gamma1 = gamma1 - 0.05
+    lats, tempgamma4, tempdyninit = snowearth(lambda_heat=50, emiss=.72,tempnorm=4, 
+                                              dynalbedo=True, gamma=gamma1, usetemps=tempgamma3,
+                                                dosphere=True, upinsol=True)
     
-    avgtemp.append(mean(tempgamma4))
+    avgtemp2.append(mean(tempgamma4))
 
 
-plt.plot(gammavals, avgtemp)
+plt.plot(gammavalsup, avgtemp, label='up')
+plt.plot(gammavalsdown, avgtemp2, label='down')
+plt.xlabel('gamma value')
+plt.ylabel('Avg. Temperature (degC)')
+plt.legend()
 
 
 
