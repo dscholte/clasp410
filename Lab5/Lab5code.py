@@ -359,7 +359,7 @@ while gamma1 > .352:
 
 plt.plot(gammavalsup, avgtemp, label='up')
 plt.plot(gammavalsdown, avgtemp2, label='down')
-plt.title('')
+plt.title('Q4: Effect of changes in solar forcing on avg. temperatures')
 plt.xlabel('gamma value')
 plt.ylabel('Avg. Temperature (degC)')
 plt.legend()
