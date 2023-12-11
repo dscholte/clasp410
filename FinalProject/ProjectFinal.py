@@ -17,7 +17,7 @@ Rv = 461 #J/kg/K
 #-----------------------------------------------------------------------------
 
 # Function returns the saturation vapor pressure e* in [Pa], given air
-# temperature (in degrees C) #PROVEN 
+# temperature (in degrees C) #PROVEN #Clausisu-Clapeyron
 def e_air(t_air):
     a =6.107799961
     b =4.436518521E-1
@@ -100,8 +100,8 @@ temp = np.arange(templow,temphigh,1)
 
 
 
-
-
+#
+#------------------------------------------------------------------------------
 def boundary(airtosea, humid):
     
     boundaryqvallist=[]
@@ -129,46 +129,42 @@ def boundary(airtosea, humid):
 '''
 -boundary-
     inputs:
-        
+        airtosea:
+            temperature difference from sea to air
+            
+        humid:
+            relative humidity
         
     function:
-        
+        for a given difference in air to sea temperature we have to consider
+        and include values for mass mixing ratio of the air at temperatures 
+        below the give low temperature in the range.
+        This function creates a list with length of values required which
+        depends on the air-sea temp diff value.
     
     outputs:
-        
+        list of mass mixing ratio values below the low temperature in the
+        range. For use in the bowen ratio equation.
 
 '''
 
 
-#Solution Part 2 / 3 
+#
 #-----------------------------------------------------------------------------
 def bowenratio(qstarvals=qstarvals, humid=0.70, airtosea=2, equilibrium=False):
     
     #Calculate mass mixing ratio q, given a humidity and RH = q/q*
-    
-    #Consider boundary of temp range for qvals
-    #Use to solve for q(T-airtoseatempdiff)
-    
-    #q* value for i[0-airtosea] boundary
-    specialqstarval2,specval2 , no, yes = calcqstarval(templow-(airtosea), \
-                                                       templow-(airtosea))
-    #q* value for i[1-airtosea] boundary
-    specialqstarval1,specval1 , no, yes = calcqstarval((templow+1)-(airtosea), \
-                                                       (templow+1)-(airtosea))
-    
-    
-    qvals = []
-    # RH = q/q* 
-    # Solving for q(temp - airtoseatempdiff) for use in bowen ratio
+    qvals = [] 
+    # Solving for q values at q(temp - airtoseatempdiff) for use in bowen ratio
     for i in range(len(qstarvals)):          
         vals = qstarvals[i-airtosea] * humid
             
         qvals.append(vals)
         
+    #Adding in boundary q values
     #q value for i[0-airtosea] boundary
-    qvals[0] = specval2 * humid
-    #q value for i[1-airtosea] boundary
-    qvals[1] = specval1 * humid
+    qvals[0:airtosea] = boundary(airtosea,humid)
+    #COMMENT OUT THE LINE ABOVE AND RUN TO SEE WHY IT'S IMPORTANT!
     
     
 #Calculate Bowen Ratio given air-sea temp diff
@@ -179,6 +175,7 @@ def bowenratio(qstarvals=qstarvals, humid=0.70, airtosea=2, equilibrium=False):
             #Calculate Equilibrium Bowen Ratio
             #If calculating Be, Be^-1 = (L/Cp) * dq*/dT
             boweninv = (L/Cp) * qstarvals[i]
+            #units issue below so multiply by 10
             bowen = (1/boweninv)*10
             bowenratiovals.append(bowen)
         
@@ -211,25 +208,32 @@ def bowenratio(qstarvals=qstarvals, humid=0.70, airtosea=2, equilibrium=False):
                 calculated bowen ratios use different equation:
                 Be^-1 = (L/Cp) * dq*/dT  
                 where dq*/dT is = clasius-clapeyron relation used for q* vals
+                (our calcqstarval function)
     
     function:
-        Because mass mixing ratio depends on temp, q (q-air) value used in bowen ratio
-        has to take into account the air to sea temperature difference. At the
-        lower boundary it's necessary to add '
+        Bowen Ratio equation:
+        Bo = (Cp * airseatempdiff) / (L* (qsurface - qair) )
+        where qsurface = q*(T)
+        and   qair     = q(T - airseatempdiff)
         
         
+        First For loop calculates qair values:
+            Because mass mixing ratio depends on temp, q-air value used in 
+            bowen ratio has to take into account the air to sea temperature 
+            difference.
+        Here we calculate q-air(T - airseatempdiff) values from: 
+            q-air(T - airseatempdiff) = qsurface(T - airseatempdiff) * humidity
+
+        As described in the -boundary- docstring we must work to include values
+        of qair below the temp range. Calling the boundary function here makes
+        sure our bowen ratio line is complete.
         
         
-        Bo = (Cp*air-sea-temp-diff) / (L* (qsurface-qair) )
-        
-        using inputted q* values and boundary q* values, a list of q values
-        used in the bowen ratio equation is created using RH = q/q* :
-            
-            Bo = (Cp*air-sea-temp-diff) / (L* (qsurface-qair) )
-            where qsurface = q*
-            and   qair     = q
-        
-        
+        To calculate the bowen ratio at each temperature as shown in the 
+        equation above 
+        the second For loop runs through every temperature, 
+        inputting q*(qsurface) and q(qair) values at each temp as well as the
+        inputted airtosea difference.
         
     outputs:
         bowenratiovals:
@@ -240,11 +244,21 @@ def bowenratio(qstarvals=qstarvals, humid=0.70, airtosea=2, equilibrium=False):
 
 
 
-
-
-brvals = bowenratio()
-plt.semilogy(temp, brvals)
+humiddiffarray=[]
+humidrange = np.arange(0,1,0.1)
+for i in humidrange:
+      
+    brvals = bowenratio(humid=i)
+    avgbr = np.mean(brvals)
+    humiddiffarray.append(avgbr)
+    
+    
+plt.semilogy(humidrange, humiddiffarray)
 plt.show()
+
+
+
+
 
 #Recreating Figure given
 eqbrvals = bowenratio(equilibrium=True)
