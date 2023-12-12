@@ -11,9 +11,8 @@ import matplotlib.pyplot as plt
 L = 2264000 #j/kg #latent heat of vaporization
 Ps = 101325 #Pa #surface pressure
 Cp = 1004 #J/kg/K #specific heat
-Rv = 461 #J/kg/K 
 
-#Solution Part 1 
+#Code Solution Question 1 
 #-----------------------------------------------------------------------------
 
 # Function returns the saturation vapor pressure e* in [Pa], given air
@@ -80,7 +79,7 @@ outputs:
         outputted with units of kg/kg
     
     qstarvalshere: 
-        this second output for the boundary condition used next,
+        this second output for the boundary condition...
         needed to remove the value from appended list to use as float.
         I don't know how else to do this but it seems to work fine.
         
@@ -88,19 +87,7 @@ outputs:
         outputted for use in plots
 '''
 
-
-
-
-#Running calcqstarval for -40 to 40
-#Sat. Mix Ratio (q*) from (-40) to (40) degree celsius
-qstarvals, qstarvalshere, templow, temphigh = calcqstarval(-40,40)
-#Create temp range from inputted range for quick use in plots
-temp = np.arange(templow,temphigh,1)
-
-
-
-
-#
+# Code Solution Question 2/3
 #------------------------------------------------------------------------------
 def boundary(airtosea, humid):
     
@@ -148,10 +135,8 @@ def boundary(airtosea, humid):
 
 '''
 
-
-#
 #-----------------------------------------------------------------------------
-def bowenratio(qstarvals=qstarvals, humid=0.70, airtosea=2, equilibrium=False):
+def bowenratio(qstarvals, humid=0.70, airtosea=2):
     
     #Calculate mass mixing ratio q, given a humidity and RH = q/q*
     qvals = [] 
@@ -170,20 +155,10 @@ def bowenratio(qstarvals=qstarvals, humid=0.70, airtosea=2, equilibrium=False):
 #Calculate Bowen Ratio given air-sea temp diff
     bowenratiovals=[]
     for i in range(len(qvals)):
-        if equilibrium==True:
-            
-            #Calculate Equilibrium Bowen Ratio
-            #If calculating Be, Be^-1 = (L/Cp) * dq*/dT
-            boweninv = (L/Cp) * qstarvals[i]
-            #units issue below so multiply by 10
-            bowen = (1/boweninv)*10
-            bowenratiovals.append(bowen)
-        
-        else:
-            #Otherwise calculating Bo values for temprange
-            # Bo = (Cp*air-sea-temp-diff) / (L* (qsurface-qair) )
-            bowen = (Cp*airtosea) / (L*( qstarvals[i] - qvals[i]))
-            bowenratiovals.append(bowen)
+        #Calculating Bo values for temprange
+        # Bo = (Cp*air-sea-temp-diff) / (L* (qsurface-qair) )
+        bowen = (Cp*airtosea) / (L*( qstarvals[i] - qvals[i]))
+        bowenratiovals.append(bowen)
     
     
     return bowenratiovals
@@ -201,14 +176,6 @@ def bowenratio(qstarvals=qstarvals, humid=0.70, airtosea=2, equilibrium=False):
         
         airtosea:
             temperature difference from the sea to the air
-            
-        equilibrium:
-            if solving for Be, equilibrium bowen ratio, equilibrium=True
-            when True:
-                calculated bowen ratios use different equation:
-                Be^-1 = (L/Cp) * dq*/dT  
-                where dq*/dT is = clasius-clapeyron relation used for q* vals
-                (our calcqstarval function)
     
     function:
         Bowen Ratio equation:
@@ -242,34 +209,91 @@ def bowenratio(qstarvals=qstarvals, humid=0.70, airtosea=2, equilibrium=False):
 
 '''
 
+# Question Solutions
+#-----------------------------------------------------------------------------
+#-----------------------------------------------------------------------------
+#-----------------------------------------------------------------------------
+#-----------------------------------------------------------------------------
+# Question 1
 
+zerotoforty = np.arange(0,41,1)
+satvappress = []
+for i in zerotoforty:
+    
+    vapor = e_air(i)
+    satvappress.append(vapor)
 
-humiddiffarray=[]
-humidrange = np.arange(0,1,0.1)
-for i in humidrange:
-      
-    brvals = bowenratio(humid=i)
-    avgbr = np.mean(brvals)
-    humiddiffarray.append(avgbr)
-    
-    
-plt.semilogy(humidrange, humiddiffarray)
+plt.plot(zerotoforty,satvappress)
+plt.xlabel('Air Temperature (degC)')
+plt.ylabel('Saturation Vapor Pressure (Pa)')
 plt.show()
 
+#-----------------------------------------------------------------------------
+# Question 2 
+#Running calcqstarval for -40 to 40
+#Sat. Mix Ratio (q*) from (-40) to (40) degree celsius
+qstarvals, qstarvalshere, templow, temphigh = calcqstarval(-40,40)
+#Create temp range from inputted range for quick use in plots
+temp = np.arange(templow,temphigh,1)
 
+# Question 2 
+#Change units to g/kg 
+qstarvalsgram = np.array(qstarvals)*1000 
+#Plot blue line
+plt.semilogy(temp,qstarvalsgram,'b',label='q* (g/kg)')
 
-
-
-#Recreating Figure given
-eqbrvals = bowenratio(equilibrium=True)
-# #g/kg units
-qstarvals = np.array(qstarvals)*1000 
-plt.semilogy(temp,qstarvals,'b',label='q* (g/kg)')
+#Calculate equilibrium bowen ratio
+eqbrvals = bowenratio(qstarvals, humid=1)
+#Plot red line
 plt.semilogy(temp,eqbrvals,'r',label="$B_{e}$", linestyle='--')
+
 plt.xlim(templow,temphigh)
+plt.ylim(0.1,100)
 plt.title('Recreated q* and Equilibrium Bowen Ratio')
 plt.xlabel('Temperature (degC)')
 plt.legend()
 plt.show()
 
+#-----------------------------------------------------------------------------
+#Question 3
 
+humiddiffarray=[]
+humidrange = np.arange(0,1,0.1)
+for i in humidrange:
+      
+    brvals = bowenratio(qstarvals, humid=i)
+    avgbr = np.mean(brvals)
+    humiddiffarray.append(avgbr)
+    
+airtoseaarray=[]
+airtemprange = np.arange(2,10,1)
+for i in airtemprange:
+      
+    brvals = bowenratio(qstarvals, airtosea=i)
+    avgbr = np.mean(brvals)
+    airtoseaarray.append(avgbr)
+    
+plt.plot(airtemprange, airtoseaarray) 
+plt.title('Bowen Ratio as Air to Sea temperture difference increases at constant RH=70%')
+plt.xlabel('Air-Sea Temperature Difference (degC)')
+plt.ylabel('Bowen Ratio')
+plt.show()
+plt.plot(humidrange, humiddiffarray)
+plt.title('Bowen Ratio as constant relative humidity increases at Air-Sea temperature difference of 2 degC')
+plt.xlabel('Relative Humidity')
+plt.ylabel('Bowen Ratio')
+plt.show()
+
+plt.semilogy(temp,qstarvalsgram,'b',label='q* (g/kg)')
+plt.semilogy(temp,eqbrvals,'r',label="$B_{e}$", linestyle='--')
+#Bowen ratio at 10% humidity and chosen airtosea
+eqbrvals2 = bowenratio(qstarvals, humid=0.1, airtosea=14)
+plt.semilogy(temp,eqbrvals2,'g',label="RH=0.1, Air-Sea=14 degC", linestyle='-')
+
+plt.xlim(templow,temphigh)
+plt.ylim(0.1,100)
+plt.title('Recreated q* and Equilibrium Bowen Ratio')
+plt.xlabel('Temperature (degC)')
+plt.legend()
+
+plt.show()
